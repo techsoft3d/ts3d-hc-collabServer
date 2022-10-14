@@ -1,0 +1,27 @@
+{
+    "hctm": {
+        "mongodbURI":  "mongodb://localhost:27017/conversions"
+    },
+    "hc-conversionservice": {
+        "temppath": "E:/temp/conversionservicetemp",
+        "port": "3001",
+        "runQueue": true,
+        "runServer": true,
+        "runStreamingServer": false,
+        "runStreamingManager": false,
+        "useS3": false,    
+        "queue": {
+          "converterpath": "E:/communicator/HOOPS_Communicator_2022_SP1_U2/authoring/converter/bin/win64",
+          "HEimportexportpath": "",
+          "HEInstallPath": "",
+          "converterlicense": "",
+          "maxConversions": 4,
+          "ip": "localhost",
+          "polling": false
+        },
+        "server": {
+          "listen": false
+        }      
+      }
+  }
+  

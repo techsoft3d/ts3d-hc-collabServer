@@ -1,0 +1,71 @@
+.relationshipsWindow {
+  overflow: hidden;
+
+  background: white;
+  cursor: default;
+  height: 25%;
+
+  /* prevent window from sliding up on resize*/
+  top: 0 !important;
+
+  padding-top: 10px;
+}
+
+.relationshipsWindow.hidden {
+  display: none;
+  height: 0px;
+  padding: 0px;
+}
+
+.relationshipsWindow .ui-resizable-handle.ui-resizable-n {
+  top: 0;
+  background: grey;
+  height: 10px;
+}
+
+.relationshipsWindow .tree-scroll-container {
+  height: 100%;
+}
+
+/* SCA : will need to be removed if we have a panel with tab */
+.relationshipsWindow .iScrollVerticalScrollbar {
+  margin-top: 10px;
+}
+
+.ui-modeltree-relationships-label_unaccess {
+  opacity: 0.6;
+  font-style: italic;
+}
+/* sets the background for the label*/
+.ui-modeltree-item.selected .ui-modeltree-relationships-label {
+  background-color: lightskyblue;
+}
+
+/* sets the background color for a selected sheet */
+.ui-modeltree-item.selected-sheet .ui-modeltree-relationships-label {
+  background-color: lightskyblue;
+}
+
+/* sets the background for all child labels */
+.ui-modeltree-item.selected .ui-modeltree-children .ui-modeltree-relationships-label {
+  background-color: lightblue;
+}
+
+.ui-modeltree-item .ui-modeltree-container .ui-modeltree-relationships-label.norecurseselect {
+  background-color: white;
+}
+
+.ui-modeltree-relationships-label {
+  font-size: 90%;
+  user-select: none;
+  cursor: default;
+  height: 1.32em;
+  padding: 0.28125em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.ui-model-tree-relationships-button {
+  font-size: 90%;
+}
