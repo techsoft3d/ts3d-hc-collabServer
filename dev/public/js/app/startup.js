@@ -3,9 +3,8 @@ var myLayout;
 
 async function msready() {
 
-
-    
-
+    hcCollab.initialize(hwv, ui);
+    hcCollab.start("default", "guido");
 
 }
 

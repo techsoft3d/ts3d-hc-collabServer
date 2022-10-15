@@ -37,12 +37,16 @@ exports.start = (httpServer) => {
         socket.join(joininfo.roomname);
        
         sendUserList(socket, userinfo[socket.id].roomname);
-        resendEditText(socket, userinfo[socket.id].roomname);
         if (rooms[userinfo[socket.id].roomname].lockedMaster != "") {
           sendToUser(socket.id, "lockSession", rooms[userinfo[socket.id].roomname].lockedMaster);
         }
 
       });
+
+      socket.on('collabmessage', (msg) => {
+        sendToRoom(socket, 'collabmessage', msg);
+      });
+
 
 
       socket.on('chatmessage', (msg) => {
@@ -53,33 +57,7 @@ exports.start = (httpServer) => {
         sendToRoom(socket, 'run', msg);
       });
 
-      socket.on('camera', (msg) => {
-        sendToRoom(socket, 'camera', msg);
-      });
-
-      socket.on('cuttingsection', (msg) => {
-        sendToRoom(socket, 'cuttingsection', msg);
-      });
-
-
-      socket.on('maximizebrowser', (msg) => {
-        sendToRoom(socket, 'maximizebrowser', msg);
-      });
-
-      socket.on('explodemagnitude', (msg) => {
-        sendToRoom(socket, 'explodemagnitude', msg);
-      });
-
-
-      socket.on('minimizebrowser', (msg) => {
-        sendToRoom(socket, 'minimizebrowser', msg);
-      });
-
-
-      socket.on('activatemarkupview', (msg) => {
-        sendToRoom(socket, 'activatemarkupview', msg);
-      });
-
+     
       socket.on('lockSession', (msg) => {
         rooms[userinfo[socket.id].roomname].lockedMaster = socket.id;
         sendToRoom(socket, 'lockSession', socket.id);
@@ -89,75 +67,8 @@ exports.start = (httpServer) => {
         rooms[userinfo[socket.id].roomname].lockedMaster = "";
         sendToRoom(socket, 'unlockSession', msg);
       });
-
-
-      socket.on('selection', (msg) => {
-        sendToRoom(socket, 'selection', msg);
-      });
-
-      socket.on('startcall', (msg) => {
-        sendToRoom(socket, 'startcall', msg);
-      });
-
-      
-      socket.on('startshare', (msg) => {
-        sendToRoom(socket, 'startshare', msg);
-      });
-
-      socket.on('visibility', (msg) => {
-        sendToRoom(socket, 'visibility', msg);
-      });
-
-      socket.on('isolate', (msg) => {
-        sendToRoom(socket, 'isolate', msg);
-      });
-
-      socket.on('cadview', (msg) => {
-        sendToRoom(socket, 'cadview', msg);
-      });
-
-      socket.on('matrix', (msg) => {
-        sendToRoom(socket, 'matrix', msg);
-      });
-
-      socket.on('markup', (msg) => {
-        sendToRoom(socket, 'markup', msg);
-      });
-
-      socket.on('resetvisibilities', (msg) => {
-        sendToRoom(socket, 'resetvisibilities', msg);
-      });
-
-      socket.on('reset', (msg) => {
-        sendToRoom(socket, 'reset', msg);
-      });
-
-      socket.on('clear', (msg) => {
-        sendToRoom(socket, 'clear', msg);
-      });
-
-      socket.on('loadsubtree', (msg) => {
-        sendToRoom(socket, 'loadsubtree', msg);
-      });
-
-      
-      socket.on('setdrawmode', (msg) => {
-        sendToRoom(socket, 'setdrawmode', msg);
-      });
-
-      socket.on('setprojectionmode', (msg) => {
-        sendToRoom(socket, 'setprojectionmode', msg);
-      });
-
-
-      
-      socket.on('editorselectionchanged', (msg) => {
-        sendToRoom(socket, 'editorselectionchanged', msg);
-      });
-
-      socket.on('changed', (msg) => {
-        sendToRoom(socket, 'changedmessage', msg);
-      });
+         
+   
     });
 };
 
@@ -174,21 +85,6 @@ function sendUserList(socket, roomname) {
 
     sendToRoomIncludingMe(socket, "userlist", JSON.stringify(userlist));
 
-}
-
-function resendEditText(socket, roomname) {
-  let userset = io.sockets.adapter.rooms.get(roomname);
-
-  if (userset != undefined) {
-    for (let item of userset) {
-      if (item != socket.id) {
-        {
-          sendToUser(item, "resendedittext", "");
-          break;
-        }
-      }
-    }
-  }
 }
 
 function sendToUser(user, msgtype, msg)
