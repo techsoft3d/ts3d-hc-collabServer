@@ -40,11 +40,17 @@ exports.start = (httpServer) => {
         if (rooms[userinfo[socket.id].roomname].lockedMaster != "") {
           sendToUser(socket.id, "lockSession", rooms[userinfo[socket.id].roomname].lockedMaster);
         }
+        sendInitialState(socket, joininfo.roomname);
 
       });
 
       socket.on('hcmessage', (msg) => {
         sendToRoom(socket, 'hcmessage', msg);
+      });
+
+      socket.on('initialState', (msg) => {
+        let sinfo = JSON.parse(msg);       
+          sendToUser(sinfo.recepient, "initialState", JSON.stringify(sinfo.state));
       });
 
 
@@ -113,5 +119,21 @@ function sendToRoom(socket, msgtype, msg) {
   if (userinfo[socket.id] && userinfo[socket.id].roomname) {
     let room = userinfo[socket.id].roomname;
     socket.to(room).emit(msgtype, msg);
+  }
+}
+
+
+function sendInitialState(socket, roomname) {
+  let userset = io.sockets.adapter.rooms.get(roomname);
+
+  if (userset != undefined) {
+    for (let item of userset) {
+      if (item != socket.id) {
+        {
+          sendToUser(item, "sendInitialState", socket.id);
+          break;
+        }
+      }
+    }
   }
 }

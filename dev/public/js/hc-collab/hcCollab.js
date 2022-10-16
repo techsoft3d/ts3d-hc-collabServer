@@ -34,9 +34,6 @@ export function disconnect() {
 
 }
 
-
-
-
 export function getLocalUser() {
     if (socket) {
         return {id:socket.id, name:localUserName};
@@ -631,6 +628,34 @@ export async function connect(roomname, username) {
             }
                 break;
         }
+    });
+
+
+    socket.on('initialState', function (msg) {
+        let state = JSON.parse(msg);
+
+        if (state.camera) {
+            let cam = Communicator.Camera.fromJson(state.camera);
+            cameraFromCollab = true;
+            viewer.view.setCamera(cam);
+        }
+        state.type = "initialState";
+
+        if (messageReceivedCallback) {
+            messageReceivedCallback(state);
+        }
+    });
+
+
+    socket.on('sendInitialState', function (msg) {
+      
+        let state = { camera: viewer.view.getCamera().toJson() };
+        socket.emit('initialState',JSON.stringify({recepient: msg, state:state}));
+
+        let message = {recepient: msg, type: "sendInitialState"};
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }     
     });
 
     socket.on('lockSession', function (msg) {
