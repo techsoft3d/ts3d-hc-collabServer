@@ -1208,8 +1208,19 @@
       </div>
     </div>
 
-   
+  <div id="collaboratorwindow" style="height:100%; display:none">
+    <button onclick="handleLock()" id="collabLockButton" type="button"
+      style="position:absolute;height:20px;right:0px;z-index:1000;font-size:10px" ;>Lock Control</button>
+      <button onclick="sendCustomMessage()" id="collabLockButton" type="button"
+      style="position:absolute;height:20px;left:0px;z-index:1000;font-size:10px" ;>Custom Message</button>      
+    <div id="userlistdiv" style="position:absolute;top:20px;width:100%;height:100%; background-color: lightblue;"></div>
+  </div>
 
+  <div id="chatwindow" style="height:100%; display:none">
+    <div id="chatmessages" style="font-size:12px;position:absolute;height:calc(100% - 30px);width:100%; background-color: white;overflow:auto"></div>
+      <input style="height:16px;bottom:3px;width:calc(100% - 64px); position:absolute;background-color: white;" type="text" id="chattextinput" value=""></input>
+    <button onclick="submitChat()" type="button" style="position:absolute;width:55px;height:20px;right:0px;bottom:4px";>Submit</button>
+  </div>      
 
 
 

@@ -9,32 +9,22 @@ var magnitudeFromCollab = false;
 var activateMarkupViewFromCollab = false;
 
 var cuttingSectionFromCollab = false;
-var peer = null;
 
-var blockWhileRunning = false;
-
-
-var users = [];
+var suspendSend = false;
 
 var lockedMaster = false;
 var lockedClient = false;
+var lockUser = "";
 
 var localUserName;
-
-var collabWindow = null;
-
-
-var firstRun = true;
-var firstRun2 = true;
-
-var lockUser = "";
 
 var viewer;
 var viewerui = null;
 
+var messageReceivedCallback = null;
 
 
-function disconnectSocket() {
+export function disconnect() {
     if (socket) {
         socket.disconnect();
         socket = null;
@@ -46,10 +36,54 @@ function disconnectSocket() {
 
 
 
+
+export function getLocalUser() {
+    if (socket) {
+        return {id:socket.id, name:localUserName};
+    }   
+}
+
+export function getLockedMaster() {
+    return lockedMaster;
+}
+
+
+export function getLockedClient() {
+    return lockedClient;
+}
+
+export function lockSession() {
+    if (socket && !lockedMaster && !lockedClient) {
+        socket.emit('lockSession',"");
+    }
+    lockedMaster = true;
+}
+
+
+export function unlockSession() {
+    if (socket && lockedMaster ) {
+        socket.emit('unlockSession',"");
+    }
+    lockedMaster = false;
+}
+    
 export function submitChat(chatmessage) {
 
     socket.emit('chatmessage', JSON.stringify({ user: localUserName, message: chatmessage }));
 
+}
+
+export function setSuspendSend(value) {
+    suspendSend = value;
+}
+
+
+export function sendCustomMessage(message) {
+    if (socket) {
+        message.type = "custommessage";
+        message.user = localUserName;
+        socket.emit("hcmessage", JSON.stringify(message));
+    }
 }
 
 
@@ -57,14 +91,16 @@ function sendMessage(messageType, message) {
     if (socket) {
         message.type = messageType;
         message.user = localUserName;
-        socket.emit("collabmessage", JSON.stringify(message));
+        socket.emit("hcmessage", JSON.stringify(message));
     }
 }
 
-
+export function setMessageReceivedCallback(callback) {
+    messageReceivedCallback = callback;    
+}
 
 function cameraChanged(cam) {
-    if (!cameraFromCollab && socket && !blockWhileRunning && !lockedClient) {
+    if (!cameraFromCollab && socket && !suspendSend && !lockedClient) {
         let message = { camera: cam.toJson()};
         sendMessage("camera", message);
     }
@@ -76,7 +112,7 @@ function cameraChanged(cam) {
 
 function selectionChanged(cam) {
 
-    if (socket && !blockWhileRunning && !selectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !selectionFromCollab && !lockedClient) {
         let selarray = [];
         let sels = hwv.selectionManager.getResults();
         for (let i = 0; i < sels.length; i++) {
@@ -91,7 +127,7 @@ function selectionChanged(cam) {
 }
 
 async function setNodesVisibilityCustom(nodeIds, visibility, initiallyHiddenStayHidden) {
-    if (socket && !blockWhileRunning && !visibilityFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !visibilityFromCollab && !lockedClient) {
         sendMessage('visibility', { nodeids: nodeIds, onoff: visibility });
 
     }
@@ -103,7 +139,7 @@ async function setNodesVisibilityCustom(nodeIds, visibility, initiallyHiddenStay
 }
 
 async function resetNodesVisibilityCustom() {
-    if (socket && !blockWhileRunning && !visibilityFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !visibilityFromCollab && !lockedClient) {
 
         sendMessage('resetvisibilities', {});
 
@@ -115,7 +151,7 @@ async function resetNodesVisibilityCustom() {
 }
 
 async function setDrawModeCustom(a) {
-    if (socket && !blockWhileRunning && !lockedClient) {
+    if (socket && !suspendSend && !lockedClient) {
 
         sendMessage('setdrawmode', { drawmode: a});
 
@@ -125,7 +161,7 @@ async function setDrawModeCustom(a) {
 }
 
 async function setProjectionModeCustom(a) {
-    if (socket && !blockWhileRunning && !lockedClient) {
+    if (socket && !suspendSend && !lockedClient) {
 
         sendMessage('setprojectionmode', { projectionmode: a});
 
@@ -137,7 +173,7 @@ async function setProjectionModeCustom(a) {
 
 
 async function resetCustom() {
-    if (socket && !blockWhileRunning && !lockedClient) {
+    if (socket && !suspendSend && !lockedClient) {
 
         sendMessage('reset', {});
 
@@ -147,7 +183,7 @@ async function resetCustom() {
 
 
 async function clearCustom() {
-    if (socket && !blockWhileRunning && !lockedClient) {
+    if (socket && !suspendSend && !lockedClient) {
 
         sendMessage('clear', {});
 
@@ -158,7 +194,7 @@ async function clearCustom() {
 
 
 async function setNodeMatrixCustom(nodeId, matrix) {
-    if (socket && !blockWhileRunning && !matrixFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !matrixFromCollab && !lockedClient) {
 
         let matrixinfo = { nodeid: nodeId, matrix: matrix.toJson(), user: localUserName };
         sendMessage('matrix',  { nodeid: nodeId, matrix: matrix.toJson()});
@@ -173,7 +209,7 @@ async function setNodeMatrixCustom(nodeId, matrix) {
 
 
 async function isolateNodesCustom(nodeIds, duration, fitNodes, initiallyHidden) {
-    if (socket && !blockWhileRunning && !isolateFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !isolateFromCollab && !lockedClient) {
         let isolateinfo = { nodeids: nodeIds, duration: duration, fitNodes: fitNodes, initiallyHidden: initiallyHidden };
         sendMessage('isolate', { nodeids: nodeIds, duration: duration, fitNodes: fitNodes, initiallyHidden: initiallyHidden });
 
@@ -186,7 +222,7 @@ async function isolateNodesCustom(nodeIds, duration, fitNodes, initiallyHidden) 
 
 
 async function activateCadViewCustom(nodeId, duration) {
-    if (socket && !blockWhileRunning && !activateCadViewFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !activateCadViewFromCollab && !lockedClient) {
         sendMessage('cadview', { nodeid: nodeId, duration: duration });
 
     }
@@ -199,7 +235,7 @@ async function activateCadViewCustom(nodeId, duration) {
 
 
 async function setMagnitudeCustom(magnitude) {
-    if (socket && !blockWhileRunning && !magnitudeFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !magnitudeFromCollab && !lockedClient) {
         sendMessage('explodemagnitude', { magnitude: magnitude});
 
     }
@@ -212,7 +248,7 @@ async function setMagnitudeCustom(magnitude) {
 
 
 function markupViewCreated(view) {
-    if (socket && !blockWhileRunning && !lockedClient) {
+    if (socket && !suspendSend && !lockedClient) {
         sendMessage('markup', { "id": view.getUniqueId(), "info": viewer.markupManager.exportMarkup() });
     }
 }
@@ -220,7 +256,7 @@ function markupViewCreated(view) {
 
 
 function redlineCreated() {
-    if (socket && !blockWhileRunning && !lockedClient) {
+    if (socket && !suspendSend && !lockedClient) {
         let markupview = viewer.markupManager.getActiveMarkupView();
         sendMessage('markup', { "id": markupview.getUniqueId(), "info": viewer.markupManager.exportMarkup()});
 
@@ -230,14 +266,14 @@ function redlineCreated() {
 
 
 function measurementCreated() {
-    if (socket && !blockWhileRunning && !lockedClient) {        
+    if (socket && !suspendSend && !lockedClient) {        
         sendMessage('markup',  { "id": null, "info": viewer.markupManager.exportMarkup() });
     }
 }
 
 
 async function activateMarkupViewWithPromiseCustom(guid) {
-    if (socket && !blockWhileRunning && !activateMarkupViewFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !activateMarkupViewFromCollab && !lockedClient) {
        
         sendMessage('activatemarkupview', { "id": guid});
     }
@@ -251,7 +287,7 @@ async function activateMarkupViewWithPromiseCustom(guid) {
 
 async function activateCustom(csnum, cuttingSection) {
 
-    if (socket && !blockWhileRunning && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
        let csinfo = cuttingSection.toJson();
        sendMessage('cuttingsection', { "id": csnum, active: true, csinfo: csinfo});
     }
@@ -261,7 +297,7 @@ async function activateCustom(csnum, cuttingSection) {
 
 async function deactivateCustom(csnum, cuttingSection) {
 
-    if (socket && !blockWhileRunning && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
         let csinfo = cuttingSection.toJson();
         let cuttinginfo = { "id": csnum, active: false, csinfo: csinfo, user: localUserName };
         sendMessage('cuttingsection', { "id": csnum, active: false, csinfo: csinfo});
@@ -276,7 +312,7 @@ async function deactivateCustom(csnum, cuttingSection) {
 async function updatePlaneCustom(csnum, cuttingSection, a, b, c, d, e) {
 
     await cuttingSection.updatePlaneCollab(a, b, c, d, e);
-    if (socket && !blockWhileRunning && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
         let csinfo = cuttingSection.toJson();
         sendMessage('cuttingsection', { "id": csnum, active: true, csinfo: csinfo });
     }
@@ -290,7 +326,7 @@ async function updatePlaneCustom(csnum, cuttingSection, a, b, c, d, e) {
 async function setPlaneCustom(csnum, cuttingSection, a, b, c) {
 
     await cuttingSection.setPlaneCollab(a, b, c);
-    if (socket && !blockWhileRunning && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
         let csinfo = cuttingSection.toJson();
         sendMessage('cuttingsection', { "id": csnum, active: true, csinfo: csinfo });
     }
@@ -301,26 +337,11 @@ async function setPlaneCustom(csnum, cuttingSection, a, b, c) {
 
 async function loadSubtreeFromScsFileCustom(a, b, c) {
 
-    if (socket && !blockWhileRunning && !lockedClient) {
+    if (socket && !suspendSend && !lockedClient) {
 
         sendMessage('loadsubtree', { a: a, b: b, c: c});
     }
     await viewer.model.loadSubtreeFromScsFileCollab(a, b, c);
-}
-
-
-function handleLock() {
-
-    if (lockedMaster) {
-        socket.emit('unlockSession', "");
-        $("#collabLockButton").html("Lock Control");
-        lockedMaster = false;
-    }
-    else {
-        socket.emit('lockSession', localUserName);
-        $("#collabLockButton").html("Release Control");
-        lockedMaster = true;
-    }
 }
 
 
@@ -449,7 +470,7 @@ export function initialize(hwv,ui) {
         var button = $("#ui-modelbrowser-minimizebutton");
         if (button) {
             button.on("click", function () {
-                if (socket && !blockWhileRunning && !lockedClient) {
+                if (socket && !suspendSend && !lockedClient) {
                     let button = $(this);
                     if (button.hasClass("minimized")) {
                         sendMessage('minimizebrowser', {});
@@ -465,19 +486,23 @@ export function initialize(hwv,ui) {
 }
 
 
-export async function start(roomname, username) {
+export async function connect(roomname, username) {
 
-    localUserName = localUserName;
+    localUserName = username;
 
     socket = await io();
     let joininfo = { username: username, roomname: roomname };
     socket.emit('joinroom', JSON.stringify(joininfo));
 
 
-    socket.on('collabmessage', async function (msg) {
+    socket.on('hcmessage', async function (msg) {
 
         let message = JSON.parse(msg);
-        switch (message.type) {
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }
+
+        switch (message.type) {                
             case "camera": {
                 let cam = Communicator.Camera.fromJson(message.camera);
                 cameraFromCollab = true;
@@ -609,13 +634,22 @@ export async function start(roomname, username) {
     });
 
     socket.on('lockSession', function (msg) {
-
         lockUser = msg;
         lockedClient = true;
+
+            
+        let message = {user: msg, type: "lockSession"};
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }     
     });
 
     socket.on('unlockSession', function (msg) {
         lockedClient = false;
+        let message = {type: "unlockSession"};
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }     
     });
 
 
@@ -624,14 +658,29 @@ export async function start(roomname, username) {
             lockUser = "";
             lockedClient = false;
         }
+
+        let message = {user: msg, type: "disconnected"};
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }     
     });
 
     socket.on('chatmessage', function (msg) {
-        let chatmessage = JSON.parse(msg);
+        let message = JSON.parse(msg);
+        message.type = "chatmessage";
+
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }     
       
     });
 
     socket.on('userlist', function (msg) {
-     
+        let message = JSON.parse(msg);
+        message.type = "userlist";
+
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }     
     });
 }

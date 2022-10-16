@@ -1,10 +1,114 @@
 var myLayout;
+var collaboratorTable;
+
+
+
+function sendCustomMessage() {
+
+    hcCollab.sendCustomMessage({ text: "hello" });
+}
+
+
+
+function handleLock() {
+
+    if (hcCollab.getLockedMaster()) {
+        hcCollab.unlockSession();
+        $("#collabLockButton").html("Lock Control");
+    }
+    else {
+        if (!hcCollab.getLockedClient()) {
+            hcCollab.lockSession();
+            $("#collabLockButton").html("Release Control");
+        }
+    }
+}
+
+
+
+function submitChat() {
+
+    let text = "";
+
+    text+='<div><span style="color:blue;">'+ hcCollab.getLocalUser().name + ' (You) </span>: '+$("#chattextinput").val()+'</div>';    
+    $("#chatmessages").append(text);
+    $("#chatmessages").scrollTop($("#chatmessages").height()+100);
+
+    hcCollab.submitChat($("#chattextinput").val());
+
+    $("#chattextinput").val("");
+   
+}
+
+
+
+function hcCollabMessageReceived(msg) {
+
+    switch (msg.type) {
+        case "userlist":
+            {
+                collaboratorTable.clearData();
+                let users = msg.roomusers;
+                for (let i = 0; i < users.length; i++) {
+                    var prop;
+                    if (hcCollab.getLocalUser().id == users[i].id)
+                        prop = { name: users[i].username + " (You)", id: users[i].id };
+                    else
+                        prop = { name: users[i].username, id: users[i].id };
+                    collaboratorTable.addData([prop], false);
+                }
+            }
+            break;
+        case "chatmessage":
+            {
+                let text = "";
+                text += '<div><span style="color:green;">' + msg.user + '</span>: ' + msg.message + '</div>';
+                $("#chatmessages").append(text);
+                $("#chatmessages").scrollTop($("#chatmessages").height() + 100);
+
+            }
+            break;
+        case "lockSession":
+            {
+                $("#content").css("pointer-events", "none");
+                $("#collabLockButton").prop("disabled", true);
+
+            }
+            break;
+        case "unlockSession":
+            {
+                $("#content").css("pointer-events", "all");
+                $("#collabLockButton").prop("disabled", false);
+            }
+            break;
+            case "custommessage":
+                {
+                  console.log("reveived" + msg.user + ":" + msg.text);
+                }
+                break;            
+    }
+}
+
 
 
 async function msready() {
 
+    collaboratorTable = new Tabulator("#userlistdiv", {
+        layout: "fitColumns",
+        columns: [
+            {
+                title: "ID", field: "id", width: 20, visible: false
+            },
+            { title: "Name", field: "name", formatter: "plaintext", responsive: 2 },
+        ],
+    });
+
+
+
     hcCollab.initialize(hwv, ui);
-    hcCollab.start("default", "guido");
+
+    hcCollab.setMessageReceivedCallback(hcCollabMessageReceived);
+    hcCollab.connect("default", "guido");
 
 }
 
@@ -42,23 +146,16 @@ function createUILayout() {
                         content: [
                             {
                                 type: 'component',
-                                componentName: 'Explode',
+                                componentName: 'Collaborators',
                                 isClosable: true,
                                 height: 15,
                                 componentState: { label: 'C' }
                             },                         
                             {
                                 type: 'component',
-                                componentName: 'Selection Basket',
+                                componentName: 'Chat',
                                 isClosable: true,
                                 height: 25,
-                                componentState: { label: 'C' }
-                            },
-                            {
-                                type: 'component',
-                                componentName: 'Material Tool',
-                                isClosable: true,
-                                height: 30,
                                 componentState: { label: 'C' }
                             }
                         ]
@@ -74,29 +171,14 @@ function createUILayout() {
         $(container.getElement()).append($("#content"));
     });
 
-    myLayout.registerComponent('Explode', function (container, componentState) {
-        $(container.getElement()).append($("#explodetools"));
+    myLayout.registerComponent('Collaborators', function (container, componentState) {
+        $("#collaboratorwindow").css({ "display": "block" });
+        $(container.getElement()).append($("#collaboratorwindow"));
     });
 
-    myLayout.registerComponent('Search', function (container, componentState) {
-        $(container.getElement()).append($("#searchtoolcontainer"));
-    });
-
-    myLayout.registerComponent('Smart Filters', function (container, componentState) {
-        $(container.getElement()).append($("#smartfilterscontainer"));
-    });
-
-    myLayout.registerComponent('Smart Properties', function (container, componentState) {
-        $(container.getElement()).append($("#smartpropertiescontainer"));
-    });
-
-
-    myLayout.registerComponent('Selection Basket', function (container, componentState) {
-        $(container.getElement()).append($("#selectionbasketcontainer"));
-    });
-
-    myLayout.registerComponent('Material Tool', function (container, componentState) {
-        $(container.getElement()).append($("#materialtoolcontainer"));
+    myLayout.registerComponent('Chat', function (container, componentState) {
+        $("#chatwindow").css({ "display": "block" });
+        $(container.getElement()).append($("#chatwindow"));
     });
 
     myLayout.on('stateChanged', function () {

@@ -16,7 +16,7 @@ exports.start = (httpServer) => {
         totalusers--;
         console.log('User disconnected. Total users:' + totalusers);
         if (userinfo[socket.id] != undefined) {
-          sendUserList(socket, userinfo[socket.id].roomname);
+          sendUserList(socket);
           if (rooms[userinfo[socket.id].roomname].lockedMaster == socket.id) {
             rooms[userinfo[socket.id].roomname].lockedMaster = "";
           }
@@ -36,15 +36,15 @@ exports.start = (httpServer) => {
         
         socket.join(joininfo.roomname);
        
-        sendUserList(socket, userinfo[socket.id].roomname);
+        sendUserList(socket);
         if (rooms[userinfo[socket.id].roomname].lockedMaster != "") {
           sendToUser(socket.id, "lockSession", rooms[userinfo[socket.id].roomname].lockedMaster);
         }
 
       });
 
-      socket.on('collabmessage', (msg) => {
-        sendToRoom(socket, 'collabmessage', msg);
+      socket.on('hcmessage', (msg) => {
+        sendToRoom(socket, 'hcmessage', msg);
       });
 
 
@@ -73,18 +73,25 @@ exports.start = (httpServer) => {
 };
 
 
-function sendUserList(socket, roomname) {
-    let userset = io.sockets.adapter.rooms.get(roomname);
+function getUserList(socket) {
+  let roomname = userinfo[socket.id].roomname;
+  let userset = io.sockets.adapter.rooms.get(roomname);
 
-    let userlist = [];
-    if (userset != undefined) {
-        for (let item of userset) {
-            userlist.push({ username: userinfo[item].username, id: item });
-        }
-    }
+  let userlist = [];
+  if (userset != undefined) {
+      for (let item of userset) {
+          userlist.push({ username: userinfo[item].username, id: item });
+      }
+  }
 
-    sendToRoomIncludingMe(socket, "userlist", JSON.stringify(userlist));
+  return userlist;
 
+}
+
+
+function sendUserList(socket) {
+    let users = getUserList(socket);
+    sendToRoomIncludingMe(socket, "userlist", JSON.stringify({user:socket.id, roomusers: users}));
 }
 
 function sendToUser(user, msgtype, msg)
