@@ -87,6 +87,7 @@ function hcCollabMessageReceived(msg) {
                 }
                 break;            
     }
+    return true;
 }
 
 

@@ -24,6 +24,11 @@ var viewerui = null;
 var messageReceivedCallback = null;
 
 
+export function getActive() {
+    return socket ? true : false;
+}
+
+
 export function disconnect() {
     if (socket) {
         socket.disconnect();
@@ -72,6 +77,10 @@ export function submitChat(chatmessage) {
 
 export function setSuspendSend(value) {
     suspendSend = value;
+}
+
+export function getSuspendSend(value) {
+    return suspendSend;
 }
 
 
@@ -496,7 +505,10 @@ export async function connect(roomname, username) {
 
         let message = JSON.parse(msg);
         if (messageReceivedCallback) {
-            messageReceivedCallback(message);
+            let  keepRunning = messageReceivedCallback(message);
+            if (!keepRunning) {
+                return;
+            }
         }
 
         switch (message.type) {                
@@ -633,48 +645,60 @@ export async function connect(roomname, username) {
 
     socket.on('initialState', function (msg) {
         let state = JSON.parse(msg);
+        state.type = "initialState";
+        if (messageReceivedCallback) {
+            let  keepRunning = messageReceivedCallback(state);
+            if (!keepRunning) {
+                return;
+            }
+        }
 
         if (state.camera) {
             let cam = Communicator.Camera.fromJson(state.camera);
             cameraFromCollab = true;
             viewer.view.setCamera(cam);
         }
-        state.type = "initialState";
-
-        if (messageReceivedCallback) {
-            messageReceivedCallback(state);
-        }
+       
     });
 
 
     socket.on('sendInitialState', function (msg) {
       
-        let state = { camera: viewer.view.getCamera().toJson() };
+        let state = { type:'sendInitialState', camera: viewer.view.getCamera().toJson() };
+        if (messageReceivedCallback) {
+            let  keepRunning = messageReceivedCallback(state);
+            if (!keepRunning) {
+                return;
+            }
+        }
+
         socket.emit('initialState',JSON.stringify({recepient: msg, state:state}));
 
-        let message = {recepient: msg, type: "sendInitialState"};
-        if (messageReceivedCallback) {
-            messageReceivedCallback(message);
-        }     
     });
 
     socket.on('lockSession', function (msg) {
-        lockUser = msg;
-        lockedClient = true;
-
-            
+                  
         let message = {user: msg, type: "lockSession"};
         if (messageReceivedCallback) {
-            messageReceivedCallback(message);
-        }     
+            let  keepRunning = messageReceivedCallback(message);
+            if (!keepRunning) {
+                return;
+            }
+        }  
+
+        lockUser = msg;
+        lockedClient = true;
     });
 
     socket.on('unlockSession', function (msg) {
-        lockedClient = false;
         let message = {type: "unlockSession"};
         if (messageReceivedCallback) {
-            messageReceivedCallback(message);
-        }     
+            let  keepRunning = messageReceivedCallback(message);
+            if (!keepRunning) {
+                return;
+            }
+        }   
+        lockedClient = false;        
     });
 
 
