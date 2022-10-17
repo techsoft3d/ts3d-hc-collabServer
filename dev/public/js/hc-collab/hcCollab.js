@@ -409,68 +409,72 @@ export function initialize(hwv,ui) {
     let cs2 = hwv.cuttingManager.getCuttingSection(2);
 
 
-    cs0.activateCollab = cs0.activate;
-    cs0.activate = function () {
-        activateCustom(0, this);
-    };
+    if (cs0) {
+        cs0.activateCollab = cs0.activate;
+        cs0.activate = function () {
+            activateCustom(0, this);
+        };
 
-    cs1.activateCollab = cs1.activate;
-    cs1.activate = function () {
-        activateCustom(1, this);
-    };
+        cs0.deactivateCollab = cs0.deactivate;
+        cs0.deactivate = function () {
+            deactivateCustom(0, this);
+        };
 
-    cs2.activateCollab = cs2.activate;
-    cs2.activate = function () {
-        activateCustom(2, this);
-    };
+        cs0.updatePlaneCollab = cs0.updatePlane;
+        cs0.updatePlane = function (a, b, c, d, e) {
+            updatePlaneCustom(0, this, a, b, c, d, e);
+        };
 
+        cs0.setPlaneCollab = cs0.setPlane;
+        cs0.setPlane = function (a, b, c) {
+            setPlaneCustom(0, this, a, b, c);
+        };
+    }
 
-    cs0.deactivateCollab = cs0.deactivate;
-    cs0.deactivate = function () {
-        deactivateCustom(0, this);
-    };
+    if (cs1) {
+        cs1.activateCollab = cs1.activate;
+        cs1.activate = function () {
+            activateCustom(1, this);
+        };
 
+        cs1.deactivateCollab = cs1.deactivate;
+        cs1.deactivate = function () {
+            deactivateCustom(1, this);
+        };
 
-    cs1.deactivateCollab = cs1.deactivate;
-    cs1.deactivate = function () {
-        deactivateCustom(1, this);
-    };
+        cs1.updatePlaneCollab = cs1.updatePlane;
+        cs1.updatePlane = function (a, b, c, d, e) {
+            updatePlaneCustom(1, this, a, b, c, d, e);
+        };
 
-    cs2.deactivateCollab = cs2.deactivate;
-    cs2.deactivate = function () {
-        deactivateCustom(2, this);
-    };
+        cs1.setPlaneCollab = cs1.setPlane;
+        cs1.setPlane = function (a, b, c) {
+            setPlaneCustom(1, this, a, b, c);
+        };
+    }
 
+    if (cs2) {
+        cs2.activateCollab = cs2.activate;
+        cs2.activate = function () {
+            activateCustom(2, this);
+        };
 
-    cs0.updatePlaneCollab = cs0.updatePlane;
-    cs0.updatePlane = function (a, b, c, d, e) {
-        updatePlaneCustom(0, this, a, b, c, d, e);
-    };
+        cs2.deactivateCollab = cs2.deactivate;
+        cs2.deactivate = function () {
+            deactivateCustom(2, this);
+        };
 
-    cs1.updatePlaneCollab = cs1.updatePlane;
-    cs1.updatePlane = function (a, b, c, d, e) {
-        updatePlaneCustom(1, this, a, b, c, d, e);
-    };
+        cs2.updatePlaneCollab = cs2.updatePlane;
+        cs2.updatePlane = function (a, b, c, d, e) {
+            updatePlaneCustom(2, this, a, b, c, d, e);
+        };
 
-    cs2.updatePlaneCollab = cs2.updatePlane;
-    cs2.updatePlane = function (a, b, c, d, e) {
-        updatePlaneCustom(2, this, a, b, c, d, e);
-    };
+        cs2.setPlaneCollab = cs2.setPlane;
+        cs2.setPlane = function (a, b, c) {
+            setPlaneCustom(2, this, a, b, c);
+        };
 
-    cs0.setPlaneCollab = cs0.setPlane;
-    cs0.setPlane = function (a, b, c) {
-        setPlaneCustom(0, this, a, b, c);
-    };
-
-    cs1.setPlaneCollab = cs1.setPlane;
-    cs1.setPlane = function (a, b, c) {
-        setPlaneCustom(1, this, a, b, c);
-    };
-
-    cs2.setPlaneCollab = cs2.setPlane;
-    cs2.setPlane = function (a, b, c) {
-        setPlaneCustom(2, this, a, b, c);
-    };
+    }
 
     if (viewerui) {
         var button = $("#ui-modelbrowser-minimizebutton");
@@ -492,11 +496,11 @@ export function initialize(hwv,ui) {
 }
 
 
-export async function connect(roomname, username) {
+export async function connect(roomname, username, url) {
 
     localUserName = username;
 
-    socket = await io();
+    socket = await io(url);
     let joininfo = { username: username, roomname: roomname };
     socket.emit('joinroom', JSON.stringify(joininfo));
 
