@@ -11,11 +11,29 @@ const config = require('config');
 const collab = require('./collab');
 
 
-exports.start = async function (server) {
+exports.start = async function (server, config) {
 
-  collab.start(server);
+  collab.start(server, config);
    
 };
+
+
+
+exports.createRoom = async function (roomname, password) {
+
+  collab.createRoom(roomname, password);
+   
+};
+
+
+exports.deleteRoom = async function (roomname) {
+
+  collab.deleteRoom(roomname);
+   
+};
+
+
+
 
 if (require.main === module) {
   
@@ -26,8 +44,9 @@ if (require.main === module) {
   app.use(express.static(path.join(__dirname, '../dev/public')));
 
   var server;
-  server = http.createServer(app);
-  collab.start(server);
+  server = http.createServer(app);  
+  this.start(server, {allowUserRooms: true});
+  this.createRoom("default","bla");
   
   server.listen(3000);
 

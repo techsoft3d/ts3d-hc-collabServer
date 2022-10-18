@@ -109,7 +109,7 @@ async function msready() {
     hcCollab.initialize(hwv, ui);
 
     hcCollab.setMessageReceivedCallback(hcCollabMessageReceived);
-    hcCollab.connect("default", "guido");
+    hcCollab.connect("default2", "guido","bl2a");
 
 }
 

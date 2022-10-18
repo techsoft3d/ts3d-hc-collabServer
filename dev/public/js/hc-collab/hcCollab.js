@@ -23,6 +23,7 @@ var viewerui = null;
 
 var messageReceivedCallback = null;
 
+var socketURL;
 
 export function getActive() {
     return socket ? true : false;
@@ -351,7 +352,10 @@ async function loadSubtreeFromScsFileCustom(a, b, c) {
 }
 
 
-export function initialize(hwv,ui) {
+export function initialize(hwv,ui,url) {
+
+    socketURL = url;
+
     viewer = hwv;
     viewerui = ui;
 
@@ -496,12 +500,12 @@ export function initialize(hwv,ui) {
 }
 
 
-export async function connect(roomname, username, url) {
+export async function connect(roomname, username, password) {
 
     localUserName = username;
 
-    socket = await io(url);
-    let joininfo = { username: username, roomname: roomname };
+    socket = await io(socketURL);
+    let joininfo = { username: username, roomname: roomname, password:password };
     socket.emit('joinroom', JSON.stringify(joininfo));
 
 
