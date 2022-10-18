@@ -13,7 +13,7 @@ const collab = require('./collab');
 
 exports.start = async function (server, config) {
 
-  collab.start(server, config);
+  return collab.start(server, config);
    
 };
 
@@ -45,8 +45,7 @@ if (require.main === module) {
 
   var server;
   server = http.createServer(app);  
-  this.start(server, {allowUserRooms: true});
-  this.createRoom("default","bla");
+  let io =  this.start(server, {allowUserRooms: true});
   
   server.listen(3000);
 

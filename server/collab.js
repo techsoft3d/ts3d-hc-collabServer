@@ -81,8 +81,6 @@ exports.start = (httpServer, config) => {
         return;
       }
 
-
-
       userinfo[socket.id] = joininfo;
 
 
