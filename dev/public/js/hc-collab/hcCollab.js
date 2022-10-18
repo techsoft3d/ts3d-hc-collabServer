@@ -784,6 +784,16 @@ export async function connect(roomname, username, password) {
         lockedClient = false;        
     });
 
+    socket.on("disconnect", () => {
+        lockUser = "";
+        lockedClient = false;
+        disconnect();
+        let message = {type: "connectionLost"};
+        if (messageReceivedCallback) {
+            messageReceivedCallback(message);
+        }     
+     
+      });
 
     socket.on('disconnected', function (msg) {
         if (msg == lockUser && lockedClient == true) {
