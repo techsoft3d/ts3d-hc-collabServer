@@ -1,12 +1,10 @@
 {
   "name": "hc-collabserver",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "",
   "main": "server/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server/app.js",
-    "start-server": "node server/app.js"
+    "start": "nodemon server/demo.js"
   },
   "author": "Guido Hoffmann",
   "license": "",
