@@ -1,17 +1,8 @@
 var socket = null;
 var cameraFromCollab = false;
-var selectionFromCollab = false;
-var visibilityFromCollab = false;
-var projectionModeFromCollab = false;
-var matrixFromCollab = false;
-var isolateFromCollab = false;
-var activateCadViewFromCollab = false;
-var magnitudeFromCollab = false;
-var activateMarkupViewFromCollab = false;
-
-var cuttingSectionFromCollab = false;
 
 var suspendSend = false;
+var suspendInternal = false;
 
 var lockedMaster = false;
 var lockedClient = false;
@@ -26,10 +17,13 @@ var messageReceivedCallback = null;
 
 var socketURL;
 
+var queueInterval = null;
+var messageQueue = [];
+var messageProcessing = false;
+
 export function getActive() {
     return socket ? true : false;
 }
-
 
 export function disconnect() {
     if (socket) {
@@ -51,7 +45,6 @@ export function getLockedMaster() {
     return lockedMaster;
 }
 
-
 export function getLockedClient() {
     return lockedClient;
 }
@@ -62,7 +55,6 @@ export function lockSession() {
     }
     lockedMaster = true;
 }
-
 
 export function unlockSession() {
     if (socket && lockedMaster ) {
@@ -94,7 +86,6 @@ export function sendCustomMessage(message) {
     }
 }
 
-
 function sendMessage(messageType, message) {
     if (socket) {
         message.type = messageType;
@@ -108,19 +99,16 @@ export function setMessageReceivedCallback(callback) {
 }
 
 function cameraChanged(cam) {
-    if (!cameraFromCollab && socket && !suspendSend && !lockedClient) {
+    if (!suspendInternal && socket && !suspendSend && !lockedClient) {
         let message = { camera: cam.toJson()};
         sendMessage("camera", message);
     }
-    else
-        cameraFromCollab = false;
+   
 }
-
-
 
 function selectionChanged(cam) {
 
-    if (socket && !suspendSend && !selectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         let selarray = [];
         let sels = hwv.selectionManager.getResults();
         for (let i = 0; i < sels.length; i++) {
@@ -129,37 +117,31 @@ function selectionChanged(cam) {
 
         sendMessage('selection',  { selection: selarray});
     }
-    else {
-        selectionFromCollab = false;
-    }
+    
 }
 
 async function setNodesVisibilityCustom(nodeIds, visibility, initiallyHiddenStayHidden) {
-    if (socket && !suspendSend && !visibilityFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         sendMessage('visibility', { nodeids: nodeIds, onoff: visibility });
 
     }
-    else {
-        visibilityFromCollab = false;
-    }
+    
     return await viewer.model.setNodesVisibilityCollab(nodeIds, visibility, initiallyHiddenStayHidden);
 
 }
 
 async function resetNodesVisibilityCustom() {
-    if (socket && !suspendSend && !visibilityFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         sendMessage('resetvisibilities', {});
 
     }
-    else {
-        visibilityFromCollab = false;
-    }
+   
     return await viewer.model.resetNodesVisibilityCollab();
 }
 
 async function setDrawModeCustom(a) {
-    if (socket && !suspendSend && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         sendMessage('setdrawmode', { drawmode: a});
 
@@ -169,7 +151,7 @@ async function setDrawModeCustom(a) {
 }
 
 async function setProjectionModeCustom(a) {
-    if (socket && !suspendSend && !projectionModeFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         sendMessage('setprojectionmode', { projectionmode: a});
 
@@ -178,10 +160,8 @@ async function setProjectionModeCustom(a) {
     return await viewer.view.setProjectionModeCollab(a);
 }
 
-
-
 async function resetCustom() {
-    if (socket && !suspendSend && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         sendMessage('reset', {});
 
@@ -189,9 +169,8 @@ async function resetCustom() {
     return await viewer.model.resetCollab();
 }
 
-
 async function clearCustom() {
-    if (socket && !suspendSend && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         sendMessage('clear', {});
 
@@ -200,94 +179,71 @@ async function clearCustom() {
     return await viewer.model.clearCollab();
 }
 
-
 async function setNodeMatrixCustom(nodeId, matrix) {
-    if (socket && !suspendSend && !matrixFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         let matrixinfo = { nodeid: nodeId, matrix: matrix.toJson(), user: localUserName };
         sendMessage('matrix',  { nodeid: nodeId, matrix: matrix.toJson()});
 
     }
-    else {
-        matrixFromCollab = false;
-    }
+    
     return await viewer.model.setNodeMatrixCollab(nodeId, matrix);
 }
 
-
-
 async function isolateNodesCustom(nodeIds, duration, fitNodes, initiallyHidden) {
-    if (socket && !suspendSend && !isolateFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         let isolateinfo = { nodeids: nodeIds, duration: duration, fitNodes: fitNodes, initiallyHidden: initiallyHidden };
         sendMessage('isolate', { nodeids: nodeIds, duration: duration, fitNodes: fitNodes, initiallyHidden: initiallyHidden });
 
     }
-    else {
-        isolateFromCollab = false;
-    }
+   
     return await viewer.view.isolateNodesCollab(nodeIds, 0, fitNodes, initiallyHidden);
 }
 
-
 async function activateCadViewCustom(nodeId, duration) {
-    if (socket && !suspendSend && !activateCadViewFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         sendMessage('cadview', { nodeid: nodeId, duration: duration });
 
     }
-    else {
-        activateCadViewFromCollab = false;
-    }
+   
     return await viewer.model.activateCadViewCollab(nodeId, duration);
 }
 
-
-
 async function setMagnitudeCustom(magnitude) {
-    if (socket && !suspendSend && !magnitudeFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         sendMessage('explodemagnitude', { magnitude: magnitude});
 
     }
-    else {
-        magnitudeFromCollab = false;
-    }
+   
     return await viewer.explodeManager.setMagnitudeCollab(magnitude);
 }
 
-
-
 function markupViewCreated(view) {
-    if (socket && !suspendSend && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         sendMessage('markup', { "id": view.getUniqueId(), "info": viewer.markupManager.exportMarkup() });
     }
 }
 
-
-
 function redlineCreated() {
-    if (socket && !suspendSend && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         let markupview = viewer.markupManager.getActiveMarkupView();
         sendMessage('markup', { "id": markupview.getUniqueId(), "info": viewer.markupManager.exportMarkup()});
 
     }
 }
 
-
-
 function measurementCreated() {
-    if (socket && !suspendSend && !lockedClient) {        
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {        
         sendMessage('markup',  { "id": null, "info": viewer.markupManager.exportMarkup() });
     }
 }
 
-
 async function activateMarkupViewWithPromiseCustom(guid) {
-    if (socket && !suspendSend && !activateMarkupViewFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal  && !lockedClient) {
        
         sendMessage('activatemarkupview', { "id": guid});
     }
-    else {
-        activateMarkupViewFromCollab = false;
-    }
+   
     viewer.unsetCallbacks({ camera: cameraChanged });
     await viewer.markupManager.activateMarkupViewWithPromiseCollab(guid, 0);
     viewer.setCallbacks({ camera: cameraChanged });
@@ -295,7 +251,7 @@ async function activateMarkupViewWithPromiseCustom(guid) {
 
 async function activateCustom(csnum, cuttingSection) {
 
-    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal  && !lockedClient) {
        let csinfo = cuttingSection.toJson();
        sendMessage('cuttingsection', { "id": csnum, active: true, csinfo: csinfo});
     }
@@ -305,9 +261,8 @@ async function activateCustom(csnum, cuttingSection) {
 
 async function deactivateCustom(csnum, cuttingSection) {
 
-    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal  && !lockedClient) {
         let csinfo = cuttingSection.toJson();
-        let cuttinginfo = { "id": csnum, active: false, csinfo: csinfo, user: localUserName };
         sendMessage('cuttingsection', { "id": csnum, active: false, csinfo: csinfo});
     }
 
@@ -315,43 +270,34 @@ async function deactivateCustom(csnum, cuttingSection) {
     await cuttingSection.deactivateCollab();
 }
 
-
-
 async function updatePlaneCustom(csnum, cuttingSection, a, b, c, d, e) {
 
     await cuttingSection.updatePlaneCollab(a, b, c, d, e);
-    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal  && !lockedClient) {
         let csinfo = cuttingSection.toJson();
         sendMessage('cuttingsection', { "id": csnum, active: true, csinfo: csinfo });
     }
 
 
 }
-
-
-
 
 async function setPlaneCustom(csnum, cuttingSection, a, b, c) {
 
     await cuttingSection.setPlaneCollab(a, b, c);
-    if (socket && !suspendSend && !cuttingSectionFromCollab && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal  && !lockedClient) {
         let csinfo = cuttingSection.toJson();
         sendMessage('cuttingsection', { "id": csnum, active: true, csinfo: csinfo });
     }
 }
 
-
-
-
 async function loadSubtreeFromScsFileCustom(a, b, c) {
 
-    if (socket && !suspendSend && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         sendMessage('loadsubtree', { a: a, b: b, c: c});
     }
     await viewer.model.loadSubtreeFromScsFileCollab(a, b, c);
 }
-
 
 export function initialize(hwv,ui,url) {
 
@@ -383,21 +329,17 @@ export function initialize(hwv,ui,url) {
     hwv.model.setNodesVisibilityCollab = hwv.model.setNodesVisibility;
     hwv.model.setNodesVisibility = setNodesVisibilityCustom;
 
-
     hwv.explodeManager.setMagnitudeCollab = hwv.explodeManager.setMagnitude;
     hwv.explodeManager.setMagnitude = setMagnitudeCustom;
 
-
     hwv.model.resetNodesVisibilityCollab = hwv.model.resetNodesVisibility;
     hwv.model.resetNodesVisibility = resetNodesVisibilityCustom;
-
 
     hwv.model.resetCollab = hwv.model.reset;
     hwv.model.reset = resetCustom;
 
     hwv.model.clearCollab = hwv.model.clear;
     hwv.model.clear = clearCustom;
-
 
     hwv.model.setNodeMatrixCollab = hwv.model.setNodeMatrix;
     hwv.model.setNodeMatrix = setNodeMatrixCustom;
@@ -412,7 +354,6 @@ export function initialize(hwv,ui,url) {
     let cs0 = hwv.cuttingManager.getCuttingSection(0);
     let cs1 = hwv.cuttingManager.getCuttingSection(1);
     let cs2 = hwv.cuttingManager.getCuttingSection(2);
-
 
     if (cs0) {
         cs0.activateCollab = cs0.activate;
@@ -478,7 +419,6 @@ export function initialize(hwv,ui,url) {
         cs2.setPlane = function (a, b, c) {
             setPlaneCustom(2, this, a, b, c);
         };
-
     }
 
     if (viewerui) {
@@ -499,11 +439,6 @@ export function initialize(hwv,ui,url) {
     }
 
 }
-
-
-var queueInterval = null;
-var messageQueue = [];
-var messageProcessing = false;
 
 function handleMessageQueue(message) {
 
@@ -526,14 +461,12 @@ function handleMessageQueue(message) {
                 queueInterval = null;
             }
 
-
         }, 10);
     }
 }
 
-
-
 async function handleMessage(message) {
+    suspendInternal  = true;
     switch (message.type) {                
         case "camera": {
             let cam = Communicator.Camera.fromJson(message.camera);
@@ -547,7 +480,6 @@ async function handleMessage(message) {
             break;
         case "selection": {
             let selarray = message.selection;
-            selectionFromCollab = true;
             viewer.selectionManager.clear();
             let sels = [];
             for (let i = 0; i < selarray.length; i++) {
@@ -563,7 +495,6 @@ async function handleMessage(message) {
                 sels.push(item);
             }
             for (let i = 0; i < sels.length; i++) {
-                selectionFromCollab = true;
                 await viewer.selectionManager.add(sels[i]);
             }
         }
@@ -573,7 +504,6 @@ async function handleMessage(message) {
         }
             break;
         case "activatemarkupview": {
-            activateMarkupViewFromCollab = true;
             viewer.unsetCallbacks({ camera: cameraChanged });
             await viewer.markupManager.activateMarkupViewWithPromise(message.id, 0);
             viewer.setCallbacks({ camera: cameraChanged });
@@ -593,30 +523,22 @@ async function handleMessage(message) {
         }
             break;
         case "loadsubtree": {
-            projectionModeFromCollab = true;
-            cameraFromCollab = true;
             viewer.unsetCallbacks({ camera: cameraChanged });
             await hwv.model.loadSubtreeFromScsFileCollab(message.a, message.b, message.c);
             viewer.setCallbacks({ camera: cameraChanged });
-            projectionModeFromCollab = false;
-            cameraFromCollab = false;
 
         }
             break;
         case "visibility": {
-            visibilityFromCollab = true;
             await viewer.model.setNodesVisibility(message.nodeids, message.onoff);
 
         }
             break;
         case "explodemagnitude": {
-            magnitudeFromCollab = true;
             await viewer.explodeManager.setMagnitude(message.magnitude);
         }
             break;
         case "resetvisibilities": {
-            visibilityFromCollab = true;
-            cuttingSectionFromCollab = true;
             await viewer.model.resetNodesVisibility();
         }
             break;
@@ -625,30 +547,21 @@ async function handleMessage(message) {
         }
             break;
         case "clear": {
-            cameraFromCollab = true;
-            projectionModeFromCollab =true;
             viewer.unsetCallbacks({ camera: cameraChanged });
             await viewer.model.clearCollab();
             viewer.setCallbacks({ camera: cameraChanged });
-            projectionModeFromCollab =false;
-            cameraFromCollab = false;
         }
             break;
         case "matrix" : {             
-            matrixFromCollab = true;
             await viewer.model.setNodeMatrix(message.nodeid, Communicator.Matrix.fromJson(message.matrix));
         }
             break;
-        case "isolate": {
-           
-            cameraFromCollab = true;
-            cuttingSectionFromCollab = true;
+        case "isolate": {           
             await viewer.view.isolateNodesCollab(message.nodeids, 0,
                 message.fitNodes != undefined ? message.fitNodes : undefined, message.initiallyHidden != undefined ? message.initiallyHidden : undefined);
         }
             break;
         case "cadview": {
-            activateCadViewFromCollab = true;
             viewer.model.activateCadView(message.nodeid, message.duration != undefined ? message.duration : undefined);
 
         }
@@ -656,14 +569,11 @@ async function handleMessage(message) {
         case "cuttingsection": {
             let cuttingSection = viewer.cuttingManager.getCuttingSection(message.id);
             if (message.active) {
-                cuttingSectionFromCollab = true;
-                matrixFromCollab = true;
                 await cuttingSection.fromJson(message.csinfo);
             }
             else {
                 cuttingSection.deactivateCollab();
             }
-            cuttingSectionFromCollab = false;
         }
             break;
         case "minimizebrowser": {
@@ -676,6 +586,7 @@ async function handleMessage(message) {
             break;
     }
 
+    suspendInternal = false;
 }
 
 
@@ -686,7 +597,6 @@ export async function connect(roomname, username, password) {
     socket = await io(socketURL);
     let joininfo = { username: username, roomname: roomname, password:password };
     socket.emit('joinroom', JSON.stringify(joininfo));
-
 
     socket.on('hcmessage', async function (msg) {
 
@@ -743,7 +653,6 @@ export async function connect(roomname, username, password) {
         }
        
     });
-
 
     socket.on('sendInitialState', function (msg) {
       
