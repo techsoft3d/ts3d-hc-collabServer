@@ -147,7 +147,7 @@ function getUserList(socket) {
 
 function sendUserList(socket) {
   let users = getUserList(socket);
-  sendToRoomIncludingMe(socket, "userlist", JSON.stringify({ user: socket.id, roomusers: users }));
+  sendToRoomIncludingMe(socket, "userlist", JSON.stringify({ user: userinfo[socket.id].username, roomusers: users }));
 }
 
 function sendToUser(user, msgtype, msg) {
