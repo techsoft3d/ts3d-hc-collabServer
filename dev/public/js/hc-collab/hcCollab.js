@@ -2,6 +2,7 @@ var socket = null;
 var cameraFromCollab = false;
 var selectionFromCollab = false;
 var visibilityFromCollab = false;
+var projectionModeFromCollab = false;
 var matrixFromCollab = false;
 var isolateFromCollab = false;
 var activateCadViewFromCollab = false;
@@ -168,7 +169,7 @@ async function setDrawModeCustom(a) {
 }
 
 async function setProjectionModeCustom(a) {
-    if (socket && !suspendSend && !lockedClient) {
+    if (socket && !suspendSend && !projectionModeFromCollab && !lockedClient) {
 
         sendMessage('setprojectionmode', { projectionmode: a});
 
@@ -500,6 +501,184 @@ export function initialize(hwv,ui,url) {
 }
 
 
+var queueInterval = null;
+var messageQueue = [];
+var messageProcessing = false;
+
+function handleMessageQueue(message) {
+
+    messageQueue.push(message);
+    
+    if (!queueInterval) {
+
+        let queueInterval = setInterval(async function () {
+            if (messageQueue.length > 0) {
+                if (!messageProcessing) {
+                    messageProcessing = true;
+                    let message = messageQueue.shift();
+                    await handleMessage(message);
+                    messageProcessing = false;
+                }
+
+            }
+            else {
+                clearInterval(queueInterval);
+                queueInterval = null;
+            }
+
+
+        }, 10);
+    }
+}
+
+
+
+async function handleMessage(message) {
+    switch (message.type) {                
+        case "camera": {
+            let cam = Communicator.Camera.fromJson(message.camera);
+            cameraFromCollab = true;
+            await viewer.view.setCamera(cam);
+        }
+            break;
+        case "setprojectionmode": {
+            await viewer.view.setProjectionModeCollab(message.projectionmode);
+        }
+            break;
+        case "selection": {
+            let selarray = message.selection;
+            selectionFromCollab = true;
+            viewer.selectionManager.clear();
+            let sels = [];
+            for (let i = 0; i < selarray.length; i++) {
+                let faceEntity, lineEntity, pointEntity;
+                if (selarray[i].faceEntity)
+                    faceEntity = Communicator.Selection.FaceEntity.fromJson(selarray[i].faceEntity);
+                if (selarray[i].lineEntity)
+                    lineEntity = Communicator.Selection.LineEntity.fromJson(selarray[i].lineEntity);
+                if (selarray[i].pointEntity)
+                    pointEntity = Communicator.Selection.PointEntity.fromJson(selarray[i].pointEntity);
+
+                let item = new Communicator.Selection.SelectionItem.create(selarray[i].nodeId, null, faceEntity, lineEntity, pointEntity);
+                sels.push(item);
+            }
+            for (let i = 0; i < sels.length; i++) {
+                selectionFromCollab = true;
+                await viewer.selectionManager.add(sels[i]);
+            }
+        }
+            break;
+        case "setdrawmode": {
+            await viewer.view.setDrawModeCollab(message.drawmode);
+        }
+            break;
+        case "activatemarkupview": {
+            activateMarkupViewFromCollab = true;
+            viewer.unsetCallbacks({ camera: cameraChanged });
+            await viewer.markupManager.activateMarkupViewWithPromise(message.id, 0);
+            viewer.setCallbacks({ camera: cameraChanged });
+        }
+            break;
+        case "markup": {
+            viewer.unsetCallbacks({ viewCreated: markupViewCreated });
+            viewer.unsetCallbacks({ redlineCreated: markupViewCreated });
+            viewer.markupManager.deleteMarkupView(message.id);
+            await viewer.markupManager.loadMarkupData(message.info);
+            if (message.id) {
+                viewer.markupManager.activateMarkupView(message.id);
+            }
+            viewer.markupManager.refreshMarkup();
+            viewer.setCallbacks({ viewCreated: markupViewCreated });
+            viewer.setCallbacks({ redlineCreated: markupViewCreated });
+        }
+            break;
+        case "loadsubtree": {
+            projectionModeFromCollab = true;
+            cameraFromCollab = true;
+            viewer.unsetCallbacks({ camera: cameraChanged });
+            await hwv.model.loadSubtreeFromScsFileCollab(message.a, message.b, message.c);
+            viewer.setCallbacks({ camera: cameraChanged });
+            projectionModeFromCollab = false;
+            cameraFromCollab = false;
+
+        }
+            break;
+        case "visibility": {
+            visibilityFromCollab = true;
+            await viewer.model.setNodesVisibility(message.nodeids, message.onoff);
+
+        }
+            break;
+        case "explodemagnitude": {
+            magnitudeFromCollab = true;
+            await viewer.explodeManager.setMagnitude(message.magnitude);
+        }
+            break;
+        case "resetvisibilities": {
+            visibilityFromCollab = true;
+            cuttingSectionFromCollab = true;
+            await viewer.model.resetNodesVisibility();
+        }
+            break;
+        case "reset": {
+            viewer.model.resetCollab();
+        }
+            break;
+        case "clear": {
+            cameraFromCollab = true;
+            projectionModeFromCollab =true;
+            viewer.unsetCallbacks({ camera: cameraChanged });
+            await viewer.model.clearCollab();
+            viewer.setCallbacks({ camera: cameraChanged });
+            projectionModeFromCollab =false;
+            cameraFromCollab = false;
+        }
+            break;
+        case "matrix" : {             
+            matrixFromCollab = true;
+            await viewer.model.setNodeMatrix(message.nodeid, Communicator.Matrix.fromJson(message.matrix));
+        }
+            break;
+        case "isolate": {
+           
+            cameraFromCollab = true;
+            cuttingSectionFromCollab = true;
+            await viewer.view.isolateNodesCollab(message.nodeids, 0,
+                message.fitNodes != undefined ? message.fitNodes : undefined, message.initiallyHidden != undefined ? message.initiallyHidden : undefined);
+        }
+            break;
+        case "cadview": {
+            activateCadViewFromCollab = true;
+            viewer.model.activateCadView(message.nodeid, message.duration != undefined ? message.duration : undefined);
+
+        }
+            break;
+        case "cuttingsection": {
+            let cuttingSection = viewer.cuttingManager.getCuttingSection(message.id);
+            if (message.active) {
+                cuttingSectionFromCollab = true;
+                matrixFromCollab = true;
+                await cuttingSection.fromJson(message.csinfo);
+            }
+            else {
+                cuttingSection.deactivateCollab();
+            }
+            cuttingSectionFromCollab = false;
+        }
+            break;
+        case "minimizebrowser": {
+            await viewerui._modelBrowser._minimizeModelBrowser();
+        }
+            break;
+        case "maximizebrowser": {
+            await viewerui._modelBrowser._maximizeModelBrowser();
+        }
+            break;
+    }
+
+}
+
+
 export async function connect(roomname, username, password) {
 
     localUserName = username;
@@ -520,133 +699,29 @@ export async function connect(roomname, username, password) {
         }
 
         switch (message.type) {                
-            case "camera": {
-                let cam = Communicator.Camera.fromJson(message.camera);
-                cameraFromCollab = true;
-                viewer.view.setCamera(cam);
-            }
-                break;
-            case "setprojectionmode": {
-                viewer.view.setProjectionModeCollab(message.projectionmode);
-            }
-                break;
-            case "selection": {
-                let selarray = message.selection;
-                selectionFromCollab = true;
-                viewer.selectionManager.clear();
-                let sels = [];
-                for (let i = 0; i < selarray.length; i++) {
-                    let faceEntity, lineEntity, pointEntity;
-                    if (selarray[i].faceEntity)
-                        faceEntity = Communicator.Selection.FaceEntity.fromJson(selarray[i].faceEntity);
-                    if (selarray[i].lineEntity)
-                        lineEntity = Communicator.Selection.LineEntity.fromJson(selarray[i].lineEntity);
-                    if (selarray[i].pointEntity)
-                        pointEntity = Communicator.Selection.PointEntity.fromJson(selarray[i].pointEntity);
-
-                    let item = new Communicator.Selection.SelectionItem.create(selarray[i].nodeId, null, faceEntity, lineEntity, pointEntity);
-                    sels.push(item);
-                }
-                for (let i = 0; i < sels.length; i++) {
-                    selectionFromCollab = true;
-                    viewer.selectionManager.add(sels[i]);
-                }
-            }
-                break;
-            case "setdrawmode": {
-                viewer.view.setDrawModeCollab(message.drawmode);
-            }
-                break;
-            case "activatemarkupview": {
-                activateMarkupViewFromCollab = true;
-                viewer.unsetCallbacks({ camera: cameraChanged });
-                await viewer.markupManager.activateMarkupViewWithPromise(message.id, 0);
-                viewer.setCallbacks({ camera: cameraChanged });
-            }
-                break;
-            case "markup": {
-                viewer.unsetCallbacks({ viewCreated: markupViewCreated });
-                viewer.unsetCallbacks({ redlineCreated: markupViewCreated });
-                viewer.markupManager.deleteMarkupView(message.id);
-                await viewer.markupManager.loadMarkupData(message.info);
-                if (message.id) {
-                    viewer.markupManager.activateMarkupView(message.id);
-                }
-                viewer.markupManager.refreshMarkup();
-                viewer.setCallbacks({ viewCreated: markupViewCreated });
-                viewer.setCallbacks({ redlineCreated: markupViewCreated });
-            }
-                break;
-            case "loadsubtree": {
-                hwv.model.loadSubtreeFromScsFileCollab(message.a, message.b, message.c);
-
-            }
-                break;
-            case "visibility": {
-                visibilityFromCollab = true;
-                viewer.model.setNodesVisibility(message.nodeids, message.onoff);
-
-            }
-                break;
-            case "explodemagnitude": {
-                magnitudeFromCollab = true;
-                viewer.explodeManager.setMagnitude(message.magnitude);
-            }
-                break;
-            case "resetvisibilities": {
-                visibilityFromCollab = true;
-                cuttingSectionFromCollab = true;
-                viewer.model.resetNodesVisibility();
-            }
-                break;
-            case "reset": {
-                viewer.model.resetCollab();
-            }
-                break;
-            case "clear": {
-                viewer.model.clearCollab();
-            }
-                break;
-            case "matrix" : {             
-                matrixFromCollab = true;
-                viewer.model.setNodeMatrix(message.nodeid, Communicator.Matrix.fromJson(message.matrix));
-            }
-                break;
-            case "isolate": {
+            case "camera": 
+              
+            case "setprojectionmode": 
+             
+            case "selection": 
+            case "setdrawmode": 
                
-                cameraFromCollab = true;
-                cuttingSectionFromCollab = true;
-                await viewer.view.isolateNodesCollab(message.nodeids, 0,
-                    message.fitNodes != undefined ? message.fitNodes : undefined, message.initiallyHidden != undefined ? message.initiallyHidden : undefined);
-            }
-                break;
-            case "cadview": {
-                activateCadViewFromCollab = true;
-                viewer.model.activateCadView(message.nodeid, message.duration != undefined ? message.duration : undefined);
-
-            }
-                break;
-            case "cuttingsection": {
-                let cuttingSection = viewer.cuttingManager.getCuttingSection(message.id);
-                if (message.active) {
-                    cuttingSectionFromCollab = true;
-                    matrixFromCollab = true;
-                    await cuttingSection.fromJson(message.csinfo);
-                }
-                else {
-                    cuttingSection.deactivateCollab();
-                }
-                cuttingSectionFromCollab = false;
-            }
-                break;
-            case "minimizebrowser": {
-                viewerui._modelBrowser._minimizeModelBrowser();
-            }
-                break;
-            case "maximizebrowser": {
-                viewerui._modelBrowser._maximizeModelBrowser();
-            }
-                break;
+            case "activatemarkupview": 
+            case "markup": 
+            case "loadsubtree": 
+            case "visibility": 
+               
+            case "explodemagnitude": 
+            case "resetvisibilities": 
+            case "reset": 
+            case "clear": 
+            case "matrix":
+            case "isolate":
+            case "cadview":
+            case "cuttingsection": 
+            case "minimizebrowser": 
+            case "maximizebrowser": 
+                handleMessageQueue(message);
         }
     });
 
