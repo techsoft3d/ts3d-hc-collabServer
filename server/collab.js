@@ -25,17 +25,11 @@ exports.deleteRoom = (roomname) => {
 
 exports.start = (httpServer, config) => {
 
-  if (config && config.corsURL) {
-    io = new Server(httpServer, {
-      cors: {
-        origin: config.corsURL,
-        methods: ["GET", "POST"]
-      }
-    });
-  }
-  else {
-    io = new Server(httpServer);
-  }
+  io = new Server(httpServer, {
+    cors: {
+      origin: "*"
+    }
+  });
 
   if (config && config.allowUserRooms != undefined) {
     allowUserRooms = config.allowUserRooms;
