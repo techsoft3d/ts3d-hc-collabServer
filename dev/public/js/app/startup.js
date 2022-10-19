@@ -139,7 +139,6 @@ async function hcCollabMessageReceived(msg) {
     return true;
 }
 
-
 function setupKinematics() {
     KT.KinematicsManager.initialize(hwv);
 
@@ -174,6 +173,7 @@ function setupKinematics() {
     hwv.operatorManager.push(myOperatorComponentMove);
 
 }
+
 async function msready() {
 
     await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/microengine.scs");

@@ -129,6 +129,25 @@ async function setNodesVisibilityCustom(nodeIds, visibility, initiallyHiddenStay
 }
 
 
+async function setNodesFaceColorCustom(nodeIds, color) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('facecolor', { nodeids: nodeIds, color: color.toJson() });
+
+    }    
+    return await viewer.model.setNodesFaceColorCollab(nodeIds, color);
+}
+
+async function unsetNodesFaceColorCustom(nodeIds) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('unsetfacecolor', { nodeids: nodeIds});
+
+    }    
+    return await viewer.model.unsetNodesFaceColorCollab(nodeIds);
+}
+
+
+
+
 async function setNodesOpacityCustom(nodeIds, opacity) {
     if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         sendMessage('opacity', { nodeids: nodeIds, opacity: opacity });
@@ -354,6 +373,13 @@ export function initialize(hwv,ui,url) {
     hwv.model.setNodesVisibilityCollab = hwv.model.setNodesVisibility;
     hwv.model.setNodesVisibility = setNodesVisibilityCustom;
 
+    hwv.model.setNodesFaceColorCollab = hwv.model.setNodesFaceColor;
+    hwv.model.setNodesFaceColor = setNodesFaceColorCustom;
+
+    hwv.model.unsetNodesFaceColorCollab = hwv.model.unsetNodesFaceColor;
+    hwv.model.unsetNodesFaceColor = unsetNodesFaceColorCustom;
+
+
     hwv.model.setNodesOpacityCollab = hwv.model.setNodesOpacity;
     hwv.model.setNodesOpacity = setNodesOpacityCustom;
 
@@ -574,6 +600,14 @@ async function handleMessage(message) {
 
         }
             break;
+        case "facecolor": {
+            await viewer.model.setNodesFaceColorCollab(message.nodeids, Communicator.Color.fromJson(message.color));
+        }
+            break;
+        case "unsetfacecolor": {
+            await viewer.model.unsetNodesFaceColorCollab(message.nodeids);
+        }
+            break;
         case "resetopacity": {
             await viewer.model.resetNodesOpacityCollab(message.nodeids, message.opacity);
 
@@ -658,31 +692,12 @@ export async function connect(roomname, username, password) {
         }
 
         switch (message.type) {                
-            case "camera": 
-              
-            case "setprojectionmode": 
-             
-            case "selection": 
-            case "setdrawmode": 
-               
-            case "activatemarkupview": 
-            case "markup": 
-            case "loadsubtree": 
-            case "visibility": 
-            case "opacity":                
-            case "resetopacity":                
-            case "setInstanceModifier":                
-            case "explodemagnitude": 
-            case "resetvisibilities": 
-            case "reset": 
-            case "clear": 
-            case "matrix":
-            case "isolate":
-            case "cadview":
-            case "cuttingsection": 
-            case "minimizebrowser": 
-            case "maximizebrowser": 
-                handleMessageQueue(message);
+            case "custommessage": {
+
+            }
+            break;            
+           default:
+            handleMessageQueue(message);
         }
     });
 
