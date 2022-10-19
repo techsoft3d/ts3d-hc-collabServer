@@ -134,7 +134,9 @@ async function setNodesFaceColorCustom(nodeIds, color) {
         sendMessage('facecolor', { nodeids: nodeIds, color: color.toJson() });
 
     }    
-    return await viewer.model.setNodesFaceColorCollab(nodeIds, color);
+
+    await viewer.model.setNodesFaceColorCollab(nodeIds, color);
+
 }
 
 async function unsetNodesFaceColorCustom(nodeIds) {
@@ -250,7 +252,7 @@ async function activateCadViewCustom(nodeId, duration) {
 
     }
    
-    return await viewer.model.activateCadViewCollab(nodeId, duration);
+    return await viewer.model.activateCadViewCollab(nodeId, 0);
 }
 
 async function setMagnitudeCustom(magnitude) {
@@ -601,11 +603,20 @@ async function handleMessage(message) {
         }
             break;
         case "facecolor": {
-            await viewer.model.setNodesFaceColorCollab(message.nodeids, Communicator.Color.fromJson(message.color));
+
+            try {
+                await viewer.model.setNodesFaceColorCollab(message.nodeids, Communicator.Color.fromJson(message.color));
+            }
+            catch (e) {
+            }
         }
             break;
         case "unsetfacecolor": {
-            await viewer.model.unsetNodesFaceColorCollab(message.nodeids);
+            try {
+                await viewer.model.unsetNodesFaceColorCollab(message.nodeids);
+            }
+            catch (e) {
+            }
         }
             break;
         case "resetopacity": {
@@ -645,8 +656,7 @@ async function handleMessage(message) {
         }
             break;
         case "cadview": {
-            viewer.model.activateCadViewCollab(message.nodeid, message.duration != undefined ? message.duration : undefined);
-
+            await viewer.model.activateCadViewCollab(message.nodeid, 0);
         }
             break;
         case "cuttingsection": {
