@@ -124,19 +124,44 @@ async function setNodesVisibilityCustom(nodeIds, visibility, initiallyHiddenStay
     if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         sendMessage('visibility', { nodeids: nodeIds, onoff: visibility });
 
-    }
-    
+    }    
     return await viewer.model.setNodesVisibilityCollab(nodeIds, visibility, initiallyHiddenStayHidden);
-
 }
+
+
+async function setNodesOpacityCustom(nodeIds, opacity) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('opacity', { nodeids: nodeIds, opacity: opacity });
+
+    }    
+    return await viewer.model.setNodesOpacityCollab(nodeIds, opacity);
+}
+
+
+async function resetNodesOpacityCustom(nodeIds) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('resetopacity', { nodeids: nodeIds});
+
+    }    
+    return await viewer.model.resetNodesOpacityCollab(nodeIds);
+}
+
+
+async function setInstanceModifierCustom(a,b,c) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('setInstanceModifier', { a:a,b:b,c:c });
+
+    }    
+    return await viewer.model.setInstanceModifierCollab(a,b,c);
+}
+
 
 async function resetNodesVisibilityCustom() {
     if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
         sendMessage('resetvisibilities', {});
 
-    }
-   
+    }   
     return await viewer.model.resetNodesVisibilityCollab();
 }
 
@@ -328,6 +353,16 @@ export function initialize(hwv,ui,url) {
 
     hwv.model.setNodesVisibilityCollab = hwv.model.setNodesVisibility;
     hwv.model.setNodesVisibility = setNodesVisibilityCustom;
+
+    hwv.model.setNodesOpacityCollab = hwv.model.setNodesOpacity;
+    hwv.model.setNodesOpacity = setNodesOpacityCustom;
+
+    hwv.model.resetNodesOpacityCollab = hwv.model.resetNodesOpacity;
+    hwv.model.resetNodesOpacity = resetNodesOpacityCustom;
+
+
+    hwv.model.setInstanceModifierCollab = hwv.model.setInstanceModifier;
+    hwv.model.setInstanceModifier = setInstanceModifierCustom;
 
     hwv.explodeManager.setMagnitudeCollab = hwv.explodeManager.setMagnitude;
     hwv.explodeManager.setMagnitude = setMagnitudeCustom;
@@ -530,16 +565,30 @@ async function handleMessage(message) {
         }
             break;
         case "visibility": {
-            await viewer.model.setNodesVisibility(message.nodeids, message.onoff);
+            await viewer.model.setNodesVisibilityCollab(message.nodeids, message.onoff);
 
         }
             break;
+        case "opacity": {
+            await viewer.model.setNodesOpacityCollab(message.nodeids, message.opacity);
+
+        }
+            break;
+        case "resetopacity": {
+            await viewer.model.resetNodesOpacityCollab(message.nodeids, message.opacity);
+
+        }
+            break;
+        case "setInstanceModifier": {
+            await viewer.model.setInstanceModifierCollab(message.a, message.b, message.c);
+        }
+            break;
         case "explodemagnitude": {
-            await viewer.explodeManager.setMagnitude(message.magnitude);
+            await viewer.explodeManager.setMagnitudeCollab(message.magnitude);
         }
             break;
         case "resetvisibilities": {
-            await viewer.model.resetNodesVisibility();
+            await viewer.model.resetNodesVisibilityCollab();
         }
             break;
         case "reset": {
@@ -553,7 +602,7 @@ async function handleMessage(message) {
         }
             break;
         case "matrix" : {             
-            await viewer.model.setNodeMatrix(message.nodeid, Communicator.Matrix.fromJson(message.matrix));
+            await viewer.model.setNodeMatrixCollab(message.nodeid, Communicator.Matrix.fromJson(message.matrix));
         }
             break;
         case "isolate": {           
@@ -562,7 +611,7 @@ async function handleMessage(message) {
         }
             break;
         case "cadview": {
-            viewer.model.activateCadView(message.nodeid, message.duration != undefined ? message.duration : undefined);
+            viewer.model.activateCadViewCollab(message.nodeid, message.duration != undefined ? message.duration : undefined);
 
         }
             break;
@@ -620,7 +669,9 @@ export async function connect(roomname, username, password) {
             case "markup": 
             case "loadsubtree": 
             case "visibility": 
-               
+            case "opacity":                
+            case "resetopacity":                
+            case "setInstanceModifier":                
             case "explodemagnitude": 
             case "resetvisibilities": 
             case "reset": 
