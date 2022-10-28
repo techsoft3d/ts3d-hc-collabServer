@@ -204,6 +204,11 @@ async function hcCollabMessageReceived(msg) {
 ### Proxy Considerations and running on Port 80/443
 It is straightforward to proxy the websocket traffic of the collaboration server to a different port/url if you are running the server standalone and all your traffic has to go through a standard port. However, if you are using our streaming server or have another websocket-based service running on that same standard port, it will not be straightforward to differentiate the traffic and one of those services will most likely fail. In that case, you should either run the collaboration server on different port or on a different IP address altogether. If you are running the collaboration server on a different ip address/port from your webserver you need to specify its URL in the client during initialization.
 
+
+## Disclaimer
+**This library is not an officially supported part of HOOPS Communicator and provided as-is.**
+
+
 ## API - Server
 
 
