@@ -1,6 +1,6 @@
 {
   "name": "ts3d-hc-collabserver",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "",
   "main": "server/app.js",
   "scripts": {

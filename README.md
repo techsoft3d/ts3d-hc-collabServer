@@ -109,6 +109,8 @@ case "custommessage":
   break;
 ```
 
+In addition to sending custom messages, it is also possible to suppress certain standard message types by checking the type and selectively returning `false` at the end of the message callback.  
+
 ### Synchronizing initial server state
 Currently, the library only synchronizes the current camera automatically when a new user connects to a session. However, you are free to synchronize additional data on connection with other clients. This can be done by adding additional values to the the message objects when a sendInitialState message has been received. This message will be send by the server to only one of the already connected clients.  
 See below for how the demo synchronizes the state of the KinematicsToolkit in that case:
@@ -219,7 +221,7 @@ Starts the collabration server
 
 
 #### *Parameters*
-* **server** - The http server object
+* **server** - The server object.
 * **config** - A Configuration object. (optional)
 
 #### *Return Value*
@@ -280,8 +282,6 @@ None
 collab.deleteRoom("default");
 ```
 
-
-
 ## API - Client
 
 
@@ -332,7 +332,7 @@ None
 Disconnects the local client from the collaboration server.
 
 #### *Parameters*
-none
+None
 #### *Return Value*
 None
 
@@ -380,7 +380,7 @@ True if the local user is connected to the collaboration server, false otherwise
 Returns the name and id of the local user.
 
 #### *Parameters*
-none
+None
 
 #### *Return Value*
 Local User Object
@@ -421,7 +421,7 @@ None
 Returns true if the local user has locked the session.
 
 #### *Parameters*
-none
+None
 
 #### *Return Value*
 True if the local user has locked the session, false otherwise.  
@@ -432,7 +432,7 @@ True if the local user has locked the session, false otherwise.
 Returns true if the session has been locked by another user.
 
 #### *Parameters*
-none
+None
 
 #### *Return Value*
 True if the session has been locked by another user, false otherwise.
