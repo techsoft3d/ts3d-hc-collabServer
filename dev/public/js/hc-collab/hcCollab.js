@@ -73,7 +73,7 @@ export function setSuspendSend(value) {
     suspendSend = value;
 }
 
-export function getSuspendSend(value) {
+export function getSuspendSend() {
     return suspendSend;
 }
 
@@ -86,16 +86,18 @@ export function sendCustomMessage(message) {
     }
 }
 
+
+
+export function setMessageReceivedCallback(callback) {
+    messageReceivedCallback = callback;    
+}
+
 function sendMessage(messageType, message) {
     if (socket) {
         message.type = messageType;
         message.user = localUserName;
         socket.emit("hcmessage", JSON.stringify(message));
     }
-}
-
-export function setMessageReceivedCallback(callback) {
-    messageReceivedCallback = callback;    
 }
 
 function cameraChanged(cam) {
