@@ -473,6 +473,8 @@ None
 ```
  hcCollab.sendCustomMessage({ customType: "test",text: "Hello" });
 ```
+The content of the custom messags is completely arbitrary, any valid JSON object that can be stringified is allowed. Just make sure that you don't define `type` and `user` which will both be set by the library before the message is send. In the above example, `customType` and `text` are just examples.
+
 
 
 ### **setSuspendSend** 
