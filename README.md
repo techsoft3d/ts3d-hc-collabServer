@@ -309,6 +309,8 @@ async function modelStructureReady() {
 }
 
 ```
+If you provide the  UI object, the collaboration library will sync opening and closing the model browser with other clients. More UI specific syncing might be added in a future version of the library.
+
 
 ### **connect** 
 
