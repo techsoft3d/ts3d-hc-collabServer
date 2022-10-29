@@ -35,7 +35,7 @@ https://github.com/techsoft3d/ts3d-hc-collabServer
 ## Usage - Server Side
 
 ### Standalone
-Start server with `npm start`. This will start the standalone server on port 3001. All websocket communication with the client will happen via this port.
+Start server with `npm start`. This will start the standalone collaboration server on port 3001. All websocket communication with the client will happen via this port. In this scenario you will either have to provide the url/port in the client during initialization or proxy the websocket connection from your webserver to the collaboration server.
 
 ### As a module
 When running the server from your own node project, simply include this module and pass your server object to it:
@@ -68,13 +68,16 @@ hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
 ```
 
 ## Limitations
-Currently, this library does not sync ALL webviewer API calls. In particular any geometry creation is currently not synced but there are many other calls that are also not handled. The usage is mostly geared towards viewing though some model manipulations like changing matrices on a node are also supported. Please let us know if you run into any problems or require support for a specific functionality. You can also of course add support yourself, either by forking the project or using the custom message mechanism of the library.
+Currently, this library does not sync ALL webviewer API calls. In particular any geometry creation is currently not synced but there are many other calls that are also not handled. The sync support is mostly geared towards viewing though some model manipulations like changing matrices on a node are also supported. In addition, if a new user joins only the camera is synced automatically, though you can provide your own code to sync other client states. Finally, the default HOOPS Communicator UI in some cases manages its own state that might not reflect the state of the webviewer. For now, it is recommended to use your own, custom UI for the collaboration server.
+
+
+Please let us know if you run into any problems or require support for specific functionality with regard to syncing. You can also of course add support yourself, either by forking the project or using the custom message mechanism of the library.
 
 ## Demo
 
-For a live demo of the this library please check out the [HOOPS Communicator 3D Sandbox](https://3dsandbox.techsoft3d.com). Its collaboration feature has been developed with this library. There is also a demo available as part of this project you can run with `npm run startdemo`. You can access the demo in the browser at http://localhost:3000/demo.html. As soon as the demo it runs it will establish a connection to the collabration server. You can open another browser window to connect as another user. After that, you can then call setupNodes() to make some of the model transparent. The demo uses the KinematicsToolkit for a simple interactive animation when clicking and dragging one of the interior parts.
+For a live demo of the this library please check out the [HOOPS Communicator 3D Sandbox](https://3dsandbox.techsoft3d.com). Its collaboration feature has been developed with this library. There is also a demo available as part of this project you can run with `npm run startdemo`. You can access the demo in the browser at http://localhost:3000/demo.html. As soon as the demo it runs it will establish a connection to the collabration server. You can open another browser window to connect as another user. After that, you can then call setupNodes() to make some parts of the model transparent. The demo uses the KinematicsToolkit for a simple interactive animation when clicking and dragging one of the interior parts.
 
-Running and looking through the code of this demo will help you understand how to build a UI around this library and some of its more advanced concepts. The client side code for the demo can be found in the dev/public folder of this project. 
+Running and looking through the code of this demo will help you understand how to build a UI around this library and some of its more advanced concepts. The client side code for the demo can be found in the dev/public folder of this project. Please note that this demo is using the development version of the collbaration library. If you want to use the library in your own project you should use the minified version of the library that can be found in the dist folder of this project.
 
 
 ## Advanced Concepts
