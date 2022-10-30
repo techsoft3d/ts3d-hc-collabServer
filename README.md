@@ -1,4 +1,4 @@
-# ts3d-hc-collabserver
+# ts3d-hc-collabserver [![NPM version](https://badge.fury.io/js/ts3d-hc-collabserver.svg)]
 
 ## Overview
 This library adds real-time collaboration support to any HOOPS Communicator based application by synchronizing a subset of the HOOPS Communicator API calls between multiple clients. This includes camera interaction, selection, markup & measurement, as well as cutting planes and various model attributes (visibility, color, matrices, etc.). 
@@ -84,7 +84,7 @@ Running and looking through the code of this demo will help you understand how t
 
 
 ### Sending your own custom messages
-By default the collaboration library will automatically syncronize webviewer messages across clients. However, in some cases you want to send more high level messages to other users. For example, in the 3D Sandbox when running the code in the editor, this is handled as a single custom message, not as a series of individual webviewer calls. In this scenario you most likely want to temporary suppress any webviewer messages from also getting synchronized. This can be done by calling `hcCollab.setSuspendSend(true)` before sending your custom message and then calling `hcCollab.setSuspendSend(false)` after your message has been sent. You have to make sure that all clients also call suspendSend when they receive your message.  
+By default the collaboration library will automatically syncronize webviewer calls across clients. However, in some cases you want to send more high level messages to other users. For example, in the 3D Sandbox when running the code in the editor, this is handled as a single custom message, not as a series of individual webviewer calls. In this scenario you most likely want to temporary suppress any webviewer messages from also getting synchronized. This can be done by calling `hcCollab.setSuspendSend(true)` before sending your custom message and then calling `hcCollab.setSuspendSend(false)` after your message has been sent. You have to make sure that all clients also call suspendSend when they receive your message.  
 Below is an example on how custom messages are handled in the callback. In the demo we are syncing interactions with the [KinematicsToolkit](https://labs.techsoft3d.com/project/kinematics-toolkit) with other clients. As the calls into those library trigger additional webviewer calls we need to suspend those messages when we send (the code for that can be found in componentMove.js) or receive our custom message. 
 
 
@@ -214,7 +214,22 @@ It is straightforward to proxy the websocket traffic of the collaboration server
 **This library is not an officially supported part of HOOPS Communicator and provided as-is.**
 
 
-## API - Server
+
+## Acknowledgments
+### Library:
+* [Socket.IO](https://socket.io/)
+
+### Demo:
+* [GoldenLayout](https://golden-layout.com/)
+* [Tabulator](http://tabulator.info/)
+
+
+----
+
+
+# API 
+
+## Server
 
 
 ### **start** 
@@ -285,7 +300,7 @@ None
 collab.deleteRoom("default");
 ```
 
-## API - Client
+## Client
 
 
 ### **initialize** 
