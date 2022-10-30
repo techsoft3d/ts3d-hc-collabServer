@@ -15,15 +15,10 @@ https://github.com/techsoft3d/ts3d-hc-collabServer
 
 ## Install
 
-### Via Github
+### Via GitHub
 
-* Clone above github project and run `npm install` in the root folder. This will install all dependencies.
+* Clone above GitHub project and run `npm install` in the root folder. This will install all dependencies.
 * Client-side libraries can be found in the ./dist folder
-* Add client-side library to your project with a script tag or use module version of library
-```
-  <script src="./js/hcCollab.min.js"></script>
-```
-
 
 
 ### Via NPM
@@ -31,6 +26,13 @@ https://github.com/techsoft3d/ts3d-hc-collabServer
 * Install the server-side library into your existing node project: `npm install ts3d-hc-collabserver`
 * Client-side libraries can be found in the ./dist folder of the installed module
 
+  
+Add client-side collaboration library as well as socket.io to your project with a script tag or use module version of library:
+```
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="./js/hcCollab.min.js"></script>
+```
 
 ## Usage - Server Side
 
