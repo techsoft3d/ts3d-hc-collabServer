@@ -34,6 +34,10 @@ var users = [];
  
 export function setSyncCamera(sync) {
     syncCamera = sync;
+    if (sync) {
+        flushCameraWidgets();
+    }
+
 }
 
 export function getSyncCamera(sync) {
@@ -43,13 +47,7 @@ export function getSyncCamera(sync) {
 export function setShowCameraWidgets(show) {
     showCameraWidgets = show;
     if (!show) {
-        for (let i in users) {
-            let user = users[i];
-            if (user.cameraWidget) {
-                user.cameraWidget.flush();
-                user.cameraWidget = null;
-            }
-        }
+        flushCameraWidgets();       
     }
 }
 
@@ -579,7 +577,7 @@ async function handleMessage(message) {
         case "camera": {
                 let cam = Communicator.Camera.fromJson(message.camera);
 
-                if (showCameraWidgets && users[message.userid]) {
+                if (showCameraWidgets && !syncCamera && users[message.userid]) {
                     let user = users[message.userid];
                     if (!user.cameraWidget) {
                         user.cameraWidget = new CameraWidget(myCameraWidgetManager);
@@ -890,4 +888,17 @@ export async function connect(roomname, username, password) {
             messageReceivedCallback(message);
         }     
     });
+}
+
+
+function flushCameraWidgets() {
+    suspendInternal = true;
+    for (let i in users) {
+        let user = users[i];
+        if (user.cameraWidget) {
+            user.cameraWidget.flush();
+            user.cameraWidget = null;
+        }
+    }
+    suspendInternal = false;
 }
