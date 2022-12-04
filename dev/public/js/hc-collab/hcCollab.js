@@ -25,6 +25,7 @@ var messageQueue = [];
 var messageProcessing = false;
 
 var syncCamera = true;
+var showCameraWidgets = false;
 
 var myCameraWidgetManager;
 
@@ -39,6 +40,22 @@ export function getSyncCamera(sync) {
     return syncCamera;
 }
 
+export function setShowCameraWidgets(show) {
+    showCameraWidgets = show;
+    if (!show) {
+        for (let i in users) {
+            let user = users[i];
+            if (user.cameraWidget) {
+                user.cameraWidget.flush();
+                user.cameraWidget = null;
+            }
+        }
+    }
+}
+
+export function getShowCameraWidgets() {
+    return showCameraWidgets;
+}
 
 export function getActive() {
     return socket ? true : false;
@@ -562,7 +579,7 @@ async function handleMessage(message) {
         case "camera": {
                 let cam = Communicator.Camera.fromJson(message.camera);
 
-                if (users[message.userid]) {
+                if (showCameraWidgets && users[message.userid]) {
                     let user = users[message.userid];
                     if (!user.cameraWidget) {
                         user.cameraWidget = new CameraWidget(myCameraWidgetManager);
