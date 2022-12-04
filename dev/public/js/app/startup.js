@@ -195,6 +195,7 @@ async function msready() {
 
     hcCollab.setMessageReceivedCallback(hcCollabMessageReceived);
     hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
+    hcCollab.setSyncCamera(false);
 
 }
 

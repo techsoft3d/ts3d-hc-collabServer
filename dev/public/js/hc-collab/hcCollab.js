@@ -1,3 +1,6 @@
+import { CameraWidget } from './CameraWidget.js';
+import { CameraWidgetManager } from './CameraWidget.js';
+
 var socket = null;
 var cameraFromCollab = false;
 
@@ -20,6 +23,22 @@ var socketURL;
 var queueInterval = null;
 var messageQueue = [];
 var messageProcessing = false;
+
+var syncCamera = true;
+
+var myCameraWidgetManager;
+
+
+var users = [];
+ 
+export function setSyncCamera(sync) {
+    syncCamera = sync;
+}
+
+export function getSyncCamera(sync) {
+    return syncCamera;
+}
+
 
 export function getActive() {
     return socket ? true : false;
@@ -96,6 +115,9 @@ function sendMessage(messageType, message) {
     if (socket) {
         message.type = messageType;
         message.user = localUserName;
+        message.userid = socket.id;
+
+        
         socket.emit("hcmessage", JSON.stringify(message));
     }
 }
@@ -351,6 +373,7 @@ export function initialize(hwv,ui,url) {
 
     socketURL = url;
 
+    myCameraWidgetManager = new CameraWidgetManager(hwv);
     viewer = hwv;
     viewerui = ui;
 
@@ -529,14 +552,29 @@ function handleMessageQueue(message) {
         }, 10);
     }
 }
+var dc1 = null;
+var dc2= null;
+
 
 async function handleMessage(message) {
     suspendInternal  = true;
     switch (message.type) {                
         case "camera": {
-            let cam = Communicator.Camera.fromJson(message.camera);
-            cameraFromCollab = true;
-            await viewer.view.setCamera(cam);
+                let cam = Communicator.Camera.fromJson(message.camera);
+
+                if (users[message.userid]) {
+                    let user = users[message.userid];
+                    if (!user.cameraWidget) {
+                        user.cameraWidget = new CameraWidget(myCameraWidgetManager);
+                    }
+                    await user.cameraWidget.update(cam);
+                    
+                }
+             
+            if (syncCamera) {
+                cameraFromCollab = true;
+                await viewer.view.setCamera(cam);
+            }
         }
             break;
         case "setprojectionmode": {
@@ -804,9 +842,32 @@ export async function connect(roomname, username, password) {
       
     });
 
-    socket.on('userlist', function (msg) {
+    socket.on('userlist', async function (msg) {
         let message = JSON.parse(msg);
         message.type = "userlist";
+
+        for (let i in users) {
+            users[i].delete = true;
+        }
+
+        for (let i=0;i<message.roomusers.length;i++) {
+            let id =message.roomusers[i].id;
+            if (!users[id]) {
+                users[id] = message.roomusers[i];           
+            }
+            users[id].delete = false;
+        }
+
+        for (let i in users) {
+            if (users[i].delete) {
+                suspendInternal  = true;
+                if (users[i].cameraWidget) {
+                    users[i].cameraWidget.flush();
+                }
+                delete users[i];
+                suspendInternal  = false;
+            }
+        }
 
         if (messageReceivedCallback) {
             messageReceivedCallback(message);
