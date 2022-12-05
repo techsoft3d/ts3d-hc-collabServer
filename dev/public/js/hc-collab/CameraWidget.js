@@ -3,6 +3,7 @@ export class CameraWidget {
     constructor(manager) {
         this._manager = manager;    
         this._node = null;
+        this._currentCamera = null;
     }
 
     async update(camera) {
@@ -12,10 +13,13 @@ export class CameraWidget {
 
             this._node =  this._manager._viewer.model.createNode( this._manager.node);
 
-            let meshnode = await this._manager._viewer.model.createMeshInstance(myMeshInstanceData,  this._node);
-            this._manager._viewer.model.setNodesOpacity([meshnode], 0.05);
-            let meshnodeLine = await this._manager._viewer.model.createMeshInstance(myMeshInstanceDataLine,  this._node);
-            this._manager._viewer.model.setNodesLineColor([meshnodeLine], new Communicator.Color(0, 0, 255));
+            let meshnode = await this._manager._viewer.model.createMeshInstance(myMeshInstanceData,  this._node,true);
+            await this._manager._viewer.model.setNodesOpacity([meshnode], 0.05);
+            let meshnodeLine = await this._manager._viewer.model.createMeshInstance(myMeshInstanceDataLine,  this._node,true);
+            await this._manager._viewer.model.setNodesLineColor([meshnodeLine], new Communicator.Color(0, 0, 255));
+            this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotSelect, [this._node], true);
+            this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.ExcludeBounding, [this._node], true);
+
 
         }
 
@@ -37,14 +41,19 @@ export class CameraWidget {
         let resmatrix3 = Communicator.Matrix.multiply(resmatrix2, transmat);        
        
         
-        this._manager._viewer.model.setNodeMatrix(this._node, resmatrix3);
+        await this._manager._viewer.model.setNodeMatrix(this._node, resmatrix3);
+        this._currentCamera = camera.copy();
 
 
     }
 
-    flush() {
+    async flush() {
         this._manager._viewer.model.deleteNode(this._node);
         this._node = null;
+    }
+
+    getCamera() {
+        return this._currentCamera;
     }
 
 

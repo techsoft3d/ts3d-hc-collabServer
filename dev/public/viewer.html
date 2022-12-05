@@ -118,6 +118,7 @@
   </head>
   <body>
     <div id="content">
+      <div id="content2" style="width: 100%; height: 100%; background: none;z-index:10000;position: absolute;pointer-events:none"></div>
       <div id="viewerContainer"></div>
       <input type="button" id="viewermenu1button" value="..." style="right:5px; position:absolute;z-index:1">
 
@@ -1212,7 +1213,9 @@
       <button onclick="sendCustomMessage()" id="collabLockButton" type="button"
       style="position:absolute;height:20px;left:0px;z-index:1000;font-size:10px" ;>Custom Message</button>      
       <button onclick="setupNodes()" id="collabLockButton" type="button"
-      style="position:absolute;height:20px;left:100px;z-index:1000;font-size:10px" ;>Setup Nodes</button>      
+      style="position:absolute;height:20px;left:95px;z-index:1000;font-size:10px" ;>Setup Nodes</button>      
+      <button onclick="cameraSync()" id="collabLockButton" type="button"
+      style="position:absolute;height:20px;left:170px;z-index:1000;font-size:10px" ;>Sync</button>      
 
     <div id="userlistdiv" style="position:absolute;top:20px;width:100%;height:100%; background-color: lightblue;"></div>
   </div>

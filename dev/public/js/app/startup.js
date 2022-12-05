@@ -18,6 +18,22 @@ function setupNodes() {
 
 
 
+function cameraSync() {
+    if (hcCollab.getSyncCamera()) {
+        hcCollab.setSyncCamera(false);
+   //     hcCollab.setShowCameraWidgets(true);
+    }
+    else {
+        hcCollab.setSyncCamera(true);
+ //       hcCollab.setShowCameraWidgets(false);
+    }
+
+    hcCollab.sendCustomMessage({ customType: "syncCamera",syncCamera: hcCollab.getSyncCamera() });
+    
+}
+
+
+
 function handleLock() {
 
     if (hcCollab.getLockedMaster()) {
@@ -102,6 +118,9 @@ async function hcCollabMessageReceived(msg) {
                 }
                 hcCollab.setSuspendSend(false);              
             }
+            if (msg.syncCamera != undefined) {
+                 hcCollab.setSyncCamera(msg.syncCamera);
+            }
         }
             break;            
         case "sendInitialState": {
@@ -112,11 +131,16 @@ async function hcCollabMessageReceived(msg) {
 
              }
              msg.kmValues = values;
+             msg.syncCamera = hcCollab.getSyncCamera();
          }      
          break;      
         case "custommessage":
             {
                 switch (msg.customType) {
+                    case "syncCamera": {
+                        hcCollab.setSyncCamera(msg.syncCamera);
+                    }
+                    break;
                     case "test": {
                         alert("User " + msg.user + " says " + msg.text);
                     }
@@ -176,9 +200,9 @@ function setupKinematics() {
 
 async function msready() {
 
-    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/microengine.scs");
+    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/arboleda.scs");
 
-    setupKinematics();
+//    setupKinematics();
   
     collaboratorTable = new Tabulator("#userlistdiv", {
         layout: "fitColumns",
@@ -196,6 +220,7 @@ async function msready() {
     hcCollab.setMessageReceivedCallback(hcCollabMessageReceived);
     hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
     hcCollab.setSyncCamera(true);
+    hcCollab.setShowCameraWidgets(true);
 
 }
 
@@ -272,6 +297,7 @@ function createUILayout() {
         if (hwv != null) {
             hwv.resizeCanvas();
         }
+        hcCollab.handleResize();
     });
     myLayout.init();
 
