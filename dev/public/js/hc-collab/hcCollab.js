@@ -752,7 +752,11 @@ async function handleMessage(message) {
         }
             break;
         case "setInstanceModifier": {
-            await viewer.model.setInstanceModifierCollab(message.a, message.b, message.c);
+            try {
+                await viewer.model.setInstanceModifierCollab(message.nodeid, message.modifier);
+            }
+            catch (e) {
+            }
         }
             break;
         case "explodemagnitude": {

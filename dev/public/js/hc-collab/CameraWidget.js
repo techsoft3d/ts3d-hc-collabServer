@@ -19,6 +19,8 @@ export class CameraWidget {
             await this._manager._viewer.model.setNodesLineColor([meshnodeLine], new Communicator.Color(0, 0, 255));
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotSelect, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.ExcludeBounding, [this._node], true);
+            this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotCut, [this._node], true);
+            this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotExplode, [this._node], true);
 
 
         }
