@@ -73,6 +73,7 @@ export function getActive() {
 
 export function disconnect() {
     if (socket) {
+        flushCameraWidgets(true);
         socket.disconnect();
         socket = null;
     }
