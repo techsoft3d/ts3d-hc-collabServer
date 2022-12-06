@@ -274,7 +274,7 @@ async function clearCustom() {
         sendMessage('clear', {});
 
     }
-
+    await flushCameraWidgets(true);
     return await viewer.model.clearCollab();
 }
 
@@ -613,6 +613,9 @@ async function handleMessage(message) {
             if (showCameraWidgets && !syncCamera && users[message.userid]) {
                 let user = users[message.userid];
                 if (!user.cameraWidget) {
+                    if (!myCameraWidgetManager.isActive()) {
+                        await myCameraWidgetManager.initialize();
+                    }
                     user.cameraWidget = new CameraWidget(myCameraWidgetManager);
                 }
                 if (!user.label) {
@@ -645,6 +648,9 @@ async function handleMessage(message) {
             if (showCameraWidgets && !syncCamera && users[message.userid]) {
                 let user = users[message.userid];
                 if (!user.cameraWidget) {
+                    if (!myCameraWidgetManager.isActive()) {
+                        await myCameraWidgetManager.initialize();
+                    }
                     user.cameraWidget = new CameraWidget(myCameraWidgetManager);
                 }
                 if (!user.label) {
@@ -773,6 +779,8 @@ async function handleMessage(message) {
         }
             break;
         case "clear": {
+            await flushCameraWidgets(true);
+
             viewer.unsetCallbacks({ camera: cameraChanged });
             await viewer.model.clearCollab();
             viewer.setCallbacks({ camera: cameraChanged });
@@ -970,7 +978,7 @@ export async function connect(roomname, username, password) {
 }
 
 
-async function flushCameraWidgets() {
+async function flushCameraWidgets(deleteManager) {
     suspendInternal = true;
     await mySpriteManager.flushAll();
     for (let i in users) {
@@ -980,6 +988,9 @@ async function flushCameraWidgets() {
             user.cameraWidget = null;
             user.label = null;
         }
+    }
+    if (deleteManager) {
+        myCameraWidgetManager.deactivate();
     }
     suspendInternal = false;
 }
@@ -1011,6 +1022,6 @@ function setupMeasureCanvas() {
     let w = m.width + 40;
     let actualHeight = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) + 20;
 
-    $("body").append('<div id="' + "camlabel" + '" style="width:' + w + 'px;text-align:center;border-radius:20px;display:block;pointer-events:none;font-family:arial;font-size:50px;position:absolute;background-color:rgba(0,0,0,0.5);color:white; z-index:1000">Hello World Test</div>');
+    $("body").append('<div style="display:none"><div id="' + "camlabel" + '" style="width:' + w + 'px;text-align:center;border-radius:20px;display:block;pointer-events:none;font-family:arial;font-size:50px;position:absolute;background-color:rgba(0,0,0,0.5);color:white;display:block">Hello World Test</div></div>');
     devdiv = $("#camlabel");
 }

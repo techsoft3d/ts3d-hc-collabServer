@@ -105,9 +105,22 @@ export class CameraWidgetManager {
 
     constructor(viewer) {
         this._viewer = viewer;   
-        this._node = viewer.model.createNode();
         this._widgets = [];
-        this._createFrustumMesh();
+        this._node = null;
+     
+    }
+
+    async initialize() {
+        this._node =  this._viewer.model.createNode();
+        await this._createFrustumMesh();
+    }
+
+    deactivate() {
+        this._node = null;
+    }
+
+    isActive() {
+        return this._node != null;
     }
 
     async _createFrustumMesh(viewer) {
