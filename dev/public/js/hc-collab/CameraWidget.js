@@ -1,9 +1,10 @@
 export class CameraWidget {
 
-    constructor(manager) {
+    constructor(manager, lineColor = new Communicator.Color(255,0,0)) {
         this._manager = manager;    
         this._node = null;
         this._currentCamera = null;
+        this._lineColor = lineColor;
     }
 
     async update(camera) {
@@ -14,9 +15,11 @@ export class CameraWidget {
             this._node =  this._manager._viewer.model.createNode( this._manager.node);
 
             let meshnode = await this._manager._viewer.model.createMeshInstance(myMeshInstanceData,  this._node,true);
-            await this._manager._viewer.model.setNodesOpacity([meshnode], 0.05);
+            await this._manager._viewer.model.setNodesOpacity([meshnode], 0.02);
             let meshnodeLine = await this._manager._viewer.model.createMeshInstance(myMeshInstanceDataLine,  this._node,true);
-            await this._manager._viewer.model.setNodesLineColor([meshnodeLine], new Communicator.Color(0, 0, 255));
+            await this._manager._viewer.model.setNodesLineColor([meshnodeLine], this._lineColor);
+            await this._manager._viewer.model.setNodesFaceColor([meshnode], new Communicator.Color(0, 0, 0));
+            await this._manager._viewer.model.setNodesLinePattern([meshnodeLine], [1, 0], 0.05, Communicator.LinePatternLengthUnit.Object);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotSelect, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.ExcludeBounding, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotCut, [this._node], true);

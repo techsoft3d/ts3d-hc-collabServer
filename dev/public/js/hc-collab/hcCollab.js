@@ -34,6 +34,9 @@ var mySpriteManager = null;
 
 
 var users = [];
+
+var userColors = [[255,0,0],[0,255,0],[0,0,255],[255,0,255],[0,255,255],[255,128,0],[128,255,0],[0,255,128],[0,128,255],[128,0,255],[255,0,128],[255,128,128],[128,255,128],[128,128,255],[255,128,255],[255,255,128],[128,255,255],[255,255,255]];
+var currentUserColor = 0;
  
 
 export function handleResize() {
@@ -604,10 +607,13 @@ var dc1 = null;
 var dc2= null;
 
 
+
 async function handleMessage(message) {
     suspendInternal = true;
     switch (message.type) {
-        case "camera": {
+        case "camera": 
+        case "camera2": 
+        {
             let cam = Communicator.Camera.fromJson(message.camera);
 
             if (showCameraWidgets && !syncCamera && users[message.userid]) {
@@ -616,10 +622,10 @@ async function handleMessage(message) {
                     if (!myCameraWidgetManager.isActive()) {
                         await myCameraWidgetManager.initialize();
                     }
-                    user.cameraWidget = new CameraWidget(myCameraWidgetManager);
+                    user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]));
                 }
                 if (!user.label) {
-                   let divid = createLabel(message.user);
+                   let divid = createLabel(message.user, user.color);
                    user.label = await mySpriteManager.createDOMSprite(divid, cam.getPosition(), 0.4,false,false);
                 }
                 else {
@@ -631,7 +637,7 @@ async function handleMessage(message) {
 
             }
 
-            if (syncCamera) {
+            if (message.type == "camera" && syncCamera) {
                 cameraFromCollab = true;
                 await viewer.view.setCamera(cam);
 
@@ -640,32 +646,8 @@ async function handleMessage(message) {
 
             }
         }
-            break;
-
-        case "camera2": {
-            let cam = Communicator.Camera.fromJson(message.camera);
-
-            if (showCameraWidgets && !syncCamera && users[message.userid]) {
-                let user = users[message.userid];
-                if (!user.cameraWidget) {
-                    if (!myCameraWidgetManager.isActive()) {
-                        await myCameraWidgetManager.initialize();
-                    }
-                    user.cameraWidget = new CameraWidget(myCameraWidgetManager);
-                }
-                if (!user.label) {
-                   let divid = createLabel(message.user);
-                   user.label = await mySpriteManager.createDOMSprite(divid, cam.getPosition(), 0.4,false,false);                   
-                }
-                else {
-                    await user.label.setPosition(cam.getPosition());
-
-                }
-                await user.cameraWidget.update(cam);
-
-            }
-        }
-            break;            
+        break;
+   
         case "setprojectionmode": {
             await viewer.view.setProjectionModeCollab(message.projectionmode);
         }
@@ -955,6 +937,10 @@ export async function connect(roomname, username, password) {
             let id =message.roomusers[i].id;
             if (!users[id]) {
                 users[id] = message.roomusers[i];           
+                users[id].color = userColors[currentUserColor++];
+                if (currentUserColor >= userColors.length) {
+                    currentUserColor = 0;
+                }
             }
             users[id].delete = false;
         }
@@ -1001,11 +987,12 @@ var devdiv;
 
 
 
-function createLabel(text) {
+function createLabel(text, color) {
     let m = ctxd.measureText(text);
     let w = m.width + 40;
     let actualHeight = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) + 20;
     devdiv.css("width", w + "px");
+    devdiv.css("background-color", 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')');
     devdiv.html(text);
     text = text.replace(/ /g,"_");
     devdiv.attr("id","dynamic0" + text);
