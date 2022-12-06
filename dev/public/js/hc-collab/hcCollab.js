@@ -279,7 +279,9 @@ async function clearCustom() {
 
     }
     await flushCameraWidgets(true);
-    return await viewer.model.clearCollab();
+    await viewer.model.clearCollab();
+    viewer._modelStructure._assemblyTree._dynamicNodeIdSeed = -63;
+    return;
 }
 
 async function setNodeMatrixCustom(nodeId, matrix) {
@@ -665,9 +667,10 @@ async function handleMessage(message) {
                     lineEntity = Communicator.Selection.LineEntity.fromJson(selarray[i].lineEntity);
                 if (selarray[i].pointEntity)
                     pointEntity = Communicator.Selection.PointEntity.fromJson(selarray[i].pointEntity);
-
-                let item = new Communicator.Selection.SelectionItem.create(selarray[i].nodeId, null, faceEntity, lineEntity, pointEntity);
-                sels.push(item);
+                if (viewer._modelStructure._assemblyTree.lookupAnyTreeNode(selarray[i].nodeId)) {
+                    let item = new Communicator.Selection.SelectionItem.create(selarray[i].nodeId, null, faceEntity, lineEntity, pointEntity);
+                    sels.push(item);
+                }
             }
             for (let i = 0; i < sels.length; i++) {
                 await viewer.selectionManager.add(sels[i]);
@@ -766,6 +769,7 @@ async function handleMessage(message) {
 
             viewer.unsetCallbacks({ camera: cameraChanged });
             await viewer.model.clearCollab();
+            viewer._modelStructure._assemblyTree._dynamicNodeIdSeed = -63;
             viewer.setCallbacks({ camera: cameraChanged });
         }
             break;
