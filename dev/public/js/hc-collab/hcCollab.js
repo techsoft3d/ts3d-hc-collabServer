@@ -1009,6 +1009,6 @@ function setupMeasureCanvas() {
     let w = m.width + 40;
     let actualHeight = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) + 20;
 
-    $("body").append('<div style="display:none"><div id="' + "camlabel" + '" style="width:' + w + 'px;text-align:center;border-radius:20px;display:block;pointer-events:none;font-family:arial;font-size:50px;position:absolute;background-color:rgba(0,0,0,0.5);color:white;display:block">Hello World Test</div></div>');
+    $("body").append('<div style="display:none"><div id="' + "camlabel" + '" style="height:' + actualHeight + 'px;width:' + w + 'px;text-align:center;border-radius:20px;display:block;pointer-events:none;font-family:arial;font-size:50px;position:absolute;background-color:rgba(0,0,0,0.5);color:white;display:block">Hello World Test</div></div>');
     devdiv = $("#camlabel");
 }
