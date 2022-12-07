@@ -196,6 +196,36 @@ async function setNodesFaceColorCustom(nodeIds, color) {
 
 }
 
+
+
+async function createMeshCustom(meshdata) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('createmesh', { meshdata: meshdata});
+    }    
+
+    return await viewer.model.createMeshCollab(meshdata);
+
+}
+
+async function createMeshInstanceCustom(meshinstancedata, nodeid) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('createmeshinstance', { meshinstancedata: meshinstancedata, nodeid:nodeid});
+    }    
+
+    return await viewer.model.createMeshInstanceCollab(meshinstancedata,nodeid);
+
+}
+
+
+function createNodeCustom(parentnodeid, nodename,nodeid,localMatrix,visibility, measurementUnits) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+        sendMessage('createnode', { parentnodeid: parentnodeid, nodename: nodename,nodeid:nodeid,localMatrix:localMatrix,visibility:visibility, measurementUnits:measurementUnits });
+    }    
+
+    return viewer.model.createNodeCollab(parentnodeid, nodename, nodeid, localMatrix,visibility, measurementUnits);
+
+}
+
 async function unsetNodesFaceColorCustom(nodeIds) {
     if (socket && !suspendSend && !suspendInternal && !lockedClient) {
         sendMessage('unsetfacecolor', { nodeids: nodeIds});
@@ -453,6 +483,18 @@ export function initialize(hwv,ui,url) {
 
     hwv.model.setNodesVisibilityCollab = hwv.model.setNodesVisibility;
     hwv.model.setNodesVisibility = setNodesVisibilityCustom;
+
+    hwv.model.createMeshCollab = hwv.model.createMesh;
+    hwv.model.createMesh = createMeshCustom;
+
+    hwv.model.createMeshInstanceCollab = hwv.model.createMeshInstance;
+    hwv.model.createMeshInstance = createMeshInstanceCustom;
+
+
+    hwv.model.createNodeCollab = hwv.model.createNode;
+    hwv.model.createNode = createNodeCustom;
+
+
 
     hwv.model.setNodesFaceColorCollab = hwv.model.setNodesFaceColor;
     hwv.model.setNodesFaceColor = setNodesFaceColorCustom;
@@ -712,6 +754,21 @@ async function handleMessage(message) {
 
         }
             break;
+        case "createmesh": {
+            let meshdata = createMeshDataFromJson(message.meshdata);
+            await viewer.model.createMesh(meshdata);
+        }
+            break;
+            case "createmeshinstance": {
+                let meshinstancedata = createMeshInstanceDataFromJson(message.meshinstancedata);
+                await viewer.model.createMeshInstance(meshinstancedata, message.nodeid);
+            }
+                break;
+            case "createnode": {
+            viewer.model.createNode(message.parentnodeid, message.nodename, message.nodeid, message.localMatrix,message.visibility, message.measurementUnits);
+        }
+            break;
+
         case "opacity": {
             try {
                 await viewer.model.setNodesOpacityCollab(message.nodeids, message.opacity);
@@ -1016,4 +1073,27 @@ function setupMeasureCanvas() {
 
     $("body").append('<div style="display:none"><div id="' + "camlabel" + '" style="height:' + actualHeight + 'px;width:' + w + 'px;text-align:center;border-radius:20px;display:block;pointer-events:none;font-family:arial;font-size:50px;position:absolute;background-color:rgba(0,0,0,0.5);color:white;display:block">Hello World Test</div></div>');
     devdiv = $("#camlabel");
+}
+
+
+function createMeshDataFromJson(json) {
+
+    let meshData = new Communicator.MeshData();
+    meshData.setFaceWinding(json._faceWinding);
+    for (let i=0;i<json._faceMeshData.length;i++) {        
+        let facedata = json._faceMeshData[i];
+        meshData.addFaces(facedata.vertexData,facedata.normalData);
+    }
+    return meshData;
+}
+
+
+
+function createMeshInstanceDataFromJson(json) {
+
+    let meshInstanceData = new Communicator.MeshInstanceData(json._meshId);
+    if (json._faceColor) {
+        meshInstanceData.setFaceColor(new Communicator.Color(json._faceColor.r,json._faceColor.g,json._faceColor.b));
+    }
+    return meshInstanceData;
 }

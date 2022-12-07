@@ -1,29 +1,37 @@
 export class CameraWidget {
 
-    constructor(manager, lineColor = new Communicator.Color(255,0,0)) {
+    constructor(manager, lineColor = new Communicator.Color(255,0,0), renderFaces = true, suppressScale = false) {
         this._manager = manager;    
         this._node = null;
         this._currentCamera = null;
         this._lineColor = lineColor;
+        this._renderFaces = renderFaces;
+        this._suppressScale = suppressScale;
     }
 
-    async update(camera) {
+    async update(camera, canvasSize = this._manager._viewer.view.getCanvasSize()) {
         if (!this._node) {
             let myMeshInstanceData = new Communicator.MeshInstanceData(this._manager._frustumMesh);
             let myMeshInstanceDataLine = new Communicator.MeshInstanceData(this._manager._frustumMeshLines);
 
             this._node =  this._manager._viewer.model.createNode( this._manager.node);
 
-            let meshnode = await this._manager._viewer.model.createMeshInstance(myMeshInstanceData,  this._node,true);
-            await this._manager._viewer.model.setNodesOpacity([meshnode], 0.02);
+            if (this._renderFaces) {
+                let meshnode = await this._manager._viewer.model.createMeshInstance(myMeshInstanceData, this._node, true);
+                await this._manager._viewer.model.setNodesOpacity([meshnode], 0.02);
+                await this._manager._viewer.model.setNodesFaceColor([meshnode], new Communicator.Color(0, 0, 0));
+            }
+
             let meshnodeLine = await this._manager._viewer.model.createMeshInstance(myMeshInstanceDataLine,  this._node,true);
             await this._manager._viewer.model.setNodesLineColor([meshnodeLine], this._lineColor);
-            await this._manager._viewer.model.setNodesFaceColor([meshnode], new Communicator.Color(0, 0, 0));
             await this._manager._viewer.model.setNodesLinePattern([meshnodeLine], [1, 0], 0.05, Communicator.LinePatternLengthUnit.Object);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotSelect, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.ExcludeBounding, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotCut, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotExplode, [this._node], true);
+            if (this._suppressScale) {
+                this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.SuppressCameraScale, [this._node], true);
+            }
 
 
         }
@@ -33,21 +41,47 @@ export class CameraWidget {
         let scalemat = new Communicator.Matrix();
         let pos = camera.getPosition();
         let transmat = new Communicator.Matrix();
+       
+
+        let camWidth, camHeight;
+        if (!this._suppressScale) {
+            camWidth = camera.getWidth();
+            camHeight = camera.getHeight();
+        }
+        else {
+            camWidth = 0.1;
+            camHeight = 0.1;
+            l = 0.2;
+
+        }
+        let width,height;
+        let ratio = canvasSize.x/canvasSize.y;
+        if (ratio >=1) {
+            width = camWidth*ratio;
+            height = camHeight;
+        }
+        else {
+            width = camWidth;
+            height = camHeight / ratio;
+
+        }
+
         transmat.setTranslationComponent(pos.x, pos.y, pos.z);
-        scalemat.setScaleComponent(camera.getWidth(),camera.getWidth(),l);
+        scalemat.setScaleComponent(width,height,l);
         let rotmat = this.ComputeVectorToVectorRotationMatrix(new Communicator.Point3(0,0,1), delta);
 
         let tup = rotmat.transform(new Communicator.Point3(0,1,0));
         let rotmat2 = this.ComputeVectorToVectorRotationMatrix(tup, camera.getUp());
 
 
-        let resmatrix = Communicator.Matrix.multiply(rotmat, rotmat2);
-        let resmatrix2 = Communicator.Matrix.multiply(resmatrix, scalemat);
+        let resmatrix = Communicator.Matrix.multiply(scalemat, rotmat);
+        let resmatrix2 = Communicator.Matrix.multiply(resmatrix, rotmat2);
         let resmatrix3 = Communicator.Matrix.multiply(resmatrix2, transmat);        
        
         
         await this._manager._viewer.model.setNodeMatrix(this._node, resmatrix3);
         this._currentCamera = camera.copy();
+        this._currentCanvasSize = canvasSize;
 
 
     }
@@ -60,8 +94,6 @@ export class CameraWidget {
     getCamera() {
         return this._currentCamera;
     }
-
-
 
     ComputeVectorToVectorRotationMatrix(p1, p2) {
         var outmatrix;
