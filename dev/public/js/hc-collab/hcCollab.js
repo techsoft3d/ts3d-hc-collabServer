@@ -49,6 +49,9 @@ export function setSyncCamera(sync) {
     if (sync) {
         flushCameraWidgets();
     }
+    else {
+        viewer.view.setTransparencyMode(0);       
+    }
 
 }
 
@@ -311,6 +314,9 @@ async function clearCustom() {
     await flushCameraWidgets(true);
     await viewer.model.clearCollab();
     viewer._modelStructure._assemblyTree._dynamicNodeIdSeed = -63;
+    let op = viewer.operatorManager.getOperator(Communicator.OperatorId.Walk);
+    op.resetDefaultWalkSpeeds();
+  
     return;
 }
 
@@ -433,6 +439,8 @@ async function loadSubtreeFromScsFileCustom(a, b, c) {
         sendMessage('loadsubtree', { a: a, b: b, c: c});
     }
     await viewer.model.loadSubtreeFromScsFileCollab(a, b, c);
+    let op = viewer.operatorManager.getOperator(Communicator.OperatorId.Walk);
+    op.resetDefaultWalkSpeeds();
 }
 
 
@@ -456,8 +464,7 @@ export function initialize(hwv,ui,url) {
     mySpriteManager.setSpriteClickedEvent(spriteClickedEvent);
 
     setupMeasureCanvas();
-
-
+    
     viewer = hwv;
     viewerui = ui;
 
@@ -667,7 +674,7 @@ async function handleMessage(message) {
                     if (!myCameraWidgetManager.isActive()) {
                         await myCameraWidgetManager.initialize();
                     }
-                    user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]));
+                    user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]), new Communicator.Color(user.color[0], user.color[1], user.color[2]));
                 }
                 if (!user.label) {
                    let divid = createLabel(message.user, user.color);
@@ -745,6 +752,8 @@ async function handleMessage(message) {
         case "loadsubtree": {
             viewer.unsetCallbacks({ camera: cameraChanged });
             await hwv.model.loadSubtreeFromScsFileCollab(message.a, message.b, message.c);
+            let op = viewer.operatorManager.getOperator(Communicator.OperatorId.Walk);
+            op.resetDefaultWalkSpeeds();
             viewer.setCallbacks({ camera: cameraChanged });
 
         }
@@ -827,6 +836,8 @@ async function handleMessage(message) {
             viewer.unsetCallbacks({ camera: cameraChanged });
             await viewer.model.clearCollab();
             viewer._modelStructure._assemblyTree._dynamicNodeIdSeed = -63;
+            let op = viewer.operatorManager.getOperator(Communicator.OperatorId.Walk);
+            op.resetDefaultWalkSpeeds();        
             viewer.setCallbacks({ camera: cameraChanged });
         }
             break;

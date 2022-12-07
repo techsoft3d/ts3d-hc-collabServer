@@ -1,12 +1,15 @@
 export class CameraWidget {
 
-    constructor(manager, lineColor = new Communicator.Color(255,0,0), renderFaces = true, suppressScale = false) {
+    constructor(manager, lineColor = new Communicator.Color(255,0,0), faceColor = new Communicator.Color(255,0,0),faceOpacity = 0.1, renderFaces = true, suppressScale = false, fixedLength = undefined) {
         this._manager = manager;    
         this._node = null;
         this._currentCamera = null;
         this._lineColor = lineColor;
+        this._faceColor = faceColor;
+        this._faceOpacity = faceOpacity;
         this._renderFaces = renderFaces;
         this._suppressScale = suppressScale;
+        this._fixedLength = fixedLength;
     }
 
     async update(camera, canvasSize = this._manager._viewer.view.getCanvasSize()) {
@@ -18,8 +21,8 @@ export class CameraWidget {
 
             if (this._renderFaces) {
                 let meshnode = await this._manager._viewer.model.createMeshInstance(myMeshInstanceData, this._node, true);
-                await this._manager._viewer.model.setNodesOpacity([meshnode], 0.02);
-                await this._manager._viewer.model.setNodesFaceColor([meshnode], new Communicator.Color(0, 0, 0));
+                await this._manager._viewer.model.setNodesOpacity([meshnode],this._faceOpacity);
+                await this._manager._viewer.model.setNodesFaceColor([meshnode], this._faceColor);
             }
 
             let meshnodeLine = await this._manager._viewer.model.createMeshInstance(myMeshInstanceDataLine,  this._node,true);
@@ -29,6 +32,8 @@ export class CameraWidget {
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.ExcludeBounding, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotCut, [this._node], true);
             this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotExplode, [this._node], true);
+            this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.DoNotLight, [this._node], true);
+
             if (this._suppressScale) {
                 this._manager._viewer.model.setInstanceModifier(Communicator.InstanceModifier.SuppressCameraScale, [this._node], true);
             }
@@ -41,19 +46,31 @@ export class CameraWidget {
         let scalemat = new Communicator.Matrix();
         let pos = camera.getPosition();
         let transmat = new Communicator.Matrix();
-       
 
+
+        let fixedLength;
         let camWidth, camHeight;
         if (!this._suppressScale) {
             camWidth = camera.getWidth();
             camHeight = camera.getHeight();
+
+            if (this._fixedLength) {
+                let r = l/this._fixedLength;
+                camWidth /= r;
+                camHeight /= r;
+                l = this._fixedLength;
+            }
         }
         else {
-            camWidth = 0.1;
-            camHeight = 0.1;
-            l = 0.2;
+            if (this._fixedLength == undefined) {
+                fixedLength = 0.2;
+            }
+            camWidth = fixedLength / 2;
+            camHeight = fixedLength / 2;
+            l = fixedLength;
 
         }
+
         let width,height;
         let ratio = canvasSize.x/canvasSize.y;
         if (ratio >=1) {
