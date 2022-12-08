@@ -202,20 +202,29 @@ async function setNodesFaceColorCustom(nodeIds, color) {
 
 
 async function createMeshCustom(meshdata) {
-    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-        sendMessage('createmesh', { meshdata: meshdata});
-    }    
+
+     var stack = new Error().stack;
+     if (stack.indexOf("hoops_web_viewer") == -1) {
+
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('createmesh', { meshdata: meshdata});
+        }    
+    }
 
     return await viewer.model.createMeshCollab(meshdata);
 
 }
 
 async function createMeshInstanceCustom(meshinstancedata, nodeid) {
-    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-        sendMessage('createmeshinstance', { meshinstancedata: meshinstancedata, nodeid:nodeid});
-    }    
+    var stack = new Error().stack;
+    if (stack.indexOf("hoops_web_viewer") == -1) {
 
-    return await viewer.model.createMeshInstanceCollab(meshinstancedata,nodeid);
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('createmeshinstance', { meshinstancedata: meshinstancedata, nodeid: nodeid });
+        }
+    }
+
+    return await viewer.model.createMeshInstanceCollab(meshinstancedata, nodeid);
 
 }
 
