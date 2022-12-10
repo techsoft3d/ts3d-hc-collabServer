@@ -330,13 +330,15 @@ async function clearCustom() {
 }
 
 async function setNodeMatrixCustom(nodeId, matrix) {
-    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+    let name = viewer.model.getNodeName(nodeId);
+    if (!name || name.indexOf("handle-") == -1) {
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
-        let matrixinfo = { nodeid: nodeId, matrix: matrix.toJson(), user: localUserName };
-        sendMessage('matrix',  { nodeid: nodeId, matrix: matrix.toJson()});
+            let matrixinfo = { nodeid: nodeId, matrix: matrix.toJson(), user: localUserName };
+            sendMessage('matrix', { nodeid: nodeId, matrix: matrix.toJson() });
 
+        }
     }
-    
     return await viewer.model.setNodeMatrixCollab(nodeId, matrix);
 }
 
