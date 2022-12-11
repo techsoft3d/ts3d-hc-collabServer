@@ -38,6 +38,71 @@ var users = [];
 var userColors = [[255,0,0],[0,255,0],[0,0,255],[255,0,255],[0,255,255],[255,128,0],[128,255,0],[0,255,128],[0,128,255],[128,0,255],[255,0,128],[255,128,128],[128,255,128],[128,128,255],[255,128,255],[255,255,128],[128,255,255],[255,255,255]];
 var currentUserColor = 0;
  
+function generateGUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+
+var nodeToGUIDHash = [];
+var GUIDtoNodeHash = [];
+
+
+var nodeToGUIDMeshHash = [];
+var GUIDtoNodeMeshHash = [];
+
+
+
+function addToMeshHash(nodeid, uniqueid) {
+    nodeToGUIDMeshHash[nodeid] = uniqueid;
+    GUIDtoNodeMeshHash[uniqueid] = nodeid;
+}
+
+
+function getMeshidFromHash(uniqueid) {
+    if (GUIDtoNodeMeshHash[uniqueid]) {
+        return GUIDtoNodeMeshHash[uniqueid];
+    }
+    else {
+        return uniqueid;
+    }
+}
+
+
+function getHashedMeshId(nodeid) {
+    if (nodeToGUIDMeshHash[nodeid]) {
+        return nodeToGUIDMeshHash[nodeid];
+    }
+    else {
+        return nodeid;
+    }
+}
+
+function addToHash(nodeid, uniqueid) {
+    nodeToGUIDHash[nodeid] = uniqueid;
+    GUIDtoNodeHash[uniqueid] = nodeid;
+}
+
+function getHashedId(nodeid) {
+    if (nodeid < 0 && nodeToGUIDHash[nodeid]) {
+        return nodeToGUIDHash[nodeid];
+    }
+    else {
+        return nodeid;
+    }
+}
+
+function getNodeidFromHash(uniqueid) {
+    if (GUIDtoNodeHash[uniqueid]) {
+        return GUIDtoNodeHash[uniqueid];
+    }
+    else {
+        return uniqueid;
+    }
+}
+
 
 export function handleResize() {
     if (mySpriteManager) {
@@ -173,6 +238,7 @@ function selectionChanged(cam) {
         let sels = hwv.selectionManager.getResults();
         for (let i = 0; i < sels.length; i++) {
             selarray.push(sels[i].toJson());
+            selarray[i].nodeId = getHashedId(selarray[i].nodeId);
         }
 
         sendMessage('selection',  { selection: selarray});
@@ -190,10 +256,15 @@ async function setNodesVisibilityCustom(nodeIds, visibility, initiallyHiddenStay
 
 
 async function setNodesFaceColorCustom(nodeIds, color) {
-    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-        sendMessage('facecolor', { nodeids: nodeIds, color: color.toJson() });
 
-    }    
+    var stack = new Error().stack;
+    if (stack.indexOf("hoops_web_viewer") == -1) {
+
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('facecolor', { nodeids: nodeIds, color: color.toJson() });
+
+        }
+    }
 
     await viewer.model.setNodesFaceColorCollab(nodeIds, color);
 
@@ -207,11 +278,15 @@ async function createMeshCustom(meshdata) {
      if (stack.indexOf("hoops_web_viewer") == -1) {
 
         if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-            sendMessage('createmesh', { meshdata: meshdata});
+            let uniqueid = generateGUID();
+            sendMessage('createmesh', { meshdata: meshdata, uniqueid:uniqueid});
+            let res = await viewer.model.createMeshCollab(meshdata);
+            addToMeshHash(res[1],uniqueid);
+            return res;
+        
         }    
     }
-
-    return await viewer.model.createMeshCollab(meshdata);
+    return  await viewer.model.createMeshCollab(meshdata);
 
 }
 
@@ -220,7 +295,15 @@ async function createMeshInstanceCustom(meshinstancedata, nodeid) {
     if (stack.indexOf("hoops_web_viewer") == -1) {
 
         if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-            sendMessage('createmeshinstance', { meshinstancedata: meshinstancedata, nodeid: nodeid });
+
+            let uniqueid = generateGUID();
+            let json = { meshinstancedata: JSON.parse(JSON.stringify(meshinstancedata)), nodeid: getHashedId(nodeid), uniqueid:uniqueid }
+            json.meshinstancedata._meshId[1] = getHashedMeshId(json.meshinstancedata._meshId[1]);
+            sendMessage('createmeshinstance', json);
+            let resnodeid =  await viewer.model.createMeshInstanceCollab(meshinstancedata, nodeid);        
+            addToHash(resnodeid,uniqueid);
+            return resnodeid;
+
         }
     }
 
@@ -231,7 +314,12 @@ async function createMeshInstanceCustom(meshinstancedata, nodeid) {
 
 function createNodeCustom(parentnodeid, nodename,nodeid,localMatrix,visibility, measurementUnits) {
     if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-        sendMessage('createnode', { parentnodeid: parentnodeid, nodename: nodename,nodeid:nodeid,localMatrix:localMatrix,visibility:visibility, measurementUnits:measurementUnits });
+        let uniqueid = generateGUID();
+        sendMessage('createnode', { parentnodeid: getHashedId(parentnodeid), nodename: nodename,nodeid:nodeid,localMatrix:localMatrix,visibility:visibility, measurementUnits:measurementUnits,
+            uniqueid:uniqueid });
+        let resnodeid = viewer.model.createNodeCollab(parentnodeid, nodename, nodeid, localMatrix,visibility, measurementUnits);    
+        addToHash(resnodeid,uniqueid);
+        return resnodeid;        
     }    
 
     return viewer.model.createNodeCollab(parentnodeid, nodename, nodeid, localMatrix,visibility, measurementUnits);
@@ -239,10 +327,14 @@ function createNodeCustom(parentnodeid, nodename,nodeid,localMatrix,visibility, 
 }
 
 async function unsetNodesFaceColorCustom(nodeIds) {
-    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-        sendMessage('unsetfacecolor', { nodeids: nodeIds});
+    var stack = new Error().stack;
+    if (stack.indexOf("hoops_web_viewer") == -1) {
 
-    }    
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('unsetfacecolor', { nodeids: nodeIds });
+
+        }
+    }
     return await viewer.model.unsetNodesFaceColorCollab(nodeIds);
 }
 
@@ -334,8 +426,8 @@ async function setNodeMatrixCustom(nodeId, matrix) {
     if (!name || name.indexOf("handle-") == -1) {
         if (socket && !suspendSend && !suspendInternal && !lockedClient) {
 
-            let matrixinfo = { nodeid: nodeId, matrix: matrix.toJson(), user: localUserName };
-            sendMessage('matrix', { nodeid: nodeId, matrix: matrix.toJson() });
+            let matrixinfo = { nodeid: getHashedId(nodeId),matrix: matrix.toJson(), user: localUserName };
+            sendMessage('matrix', matrixinfo);
 
         }
     }
@@ -727,8 +819,8 @@ async function handleMessage(message) {
                     lineEntity = Communicator.Selection.LineEntity.fromJson(selarray[i].lineEntity);
                 if (selarray[i].pointEntity)
                     pointEntity = Communicator.Selection.PointEntity.fromJson(selarray[i].pointEntity);
-                if (viewer._modelStructure._assemblyTree.lookupAnyTreeNode(selarray[i].nodeId)) {
-                    let item = new Communicator.Selection.SelectionItem.create(selarray[i].nodeId, null, faceEntity, lineEntity, pointEntity);
+                if (viewer._modelStructure._assemblyTree.lookupAnyTreeNode(getNodeidFromHash(selarray[i].nodeId))) {
+                    let item = new Communicator.Selection.SelectionItem.create(getNodeidFromHash(selarray[i].nodeId), null, faceEntity, lineEntity, pointEntity);
                     sels.push(item);
                 }
             }
@@ -776,16 +868,30 @@ async function handleMessage(message) {
             break;
         case "createmesh": {
             let meshdata = createMeshDataFromJson(message.meshdata);
-            await viewer.model.createMesh(meshdata);
+            let meshid = await viewer.model.createMesh(meshdata);
+            if (message.uniqueid) {
+                addToMeshHash(meshid[1], message.uniqueid);
+            }
+           
         }
             break;
             case "createmeshinstance": {
+                let parentnodeid = getNodeidFromHash(message.nodeid);    
+
                 let meshinstancedata = createMeshInstanceDataFromJson(message.meshinstancedata);
-                await viewer.model.createMeshInstance(meshinstancedata, message.nodeid);
+                let nodeid = await viewer.model.createMeshInstance(meshinstancedata, parentnodeid);
+                if (message.uniqueid) {
+                    addToHash(nodeid, message.uniqueid);
+                }
             }
                 break;
             case "createnode": {
-            viewer.model.createNode(message.parentnodeid, message.nodename, message.nodeid, message.localMatrix,message.visibility, message.measurementUnits);
+            let parentnodeid = getNodeidFromHash(message.parentnodeid);       
+
+            let nodeid = viewer.model.createNode(parentnodeid, message.nodename, message.nodeid, message.localMatrix,message.visibility, message.measurementUnits);
+            if (message.uniqueid) {
+                addToHash(nodeid, message.uniqueid);
+            }
         }
             break;
 
@@ -852,8 +958,9 @@ async function handleMessage(message) {
             viewer.setCallbacks({ camera: cameraChanged });
         }
             break;
-        case "matrix" : {             
-            await viewer.model.setNodeMatrixCollab(message.nodeid, Communicator.Matrix.fromJson(message.matrix));
+        case "matrix" : {      
+            let nodeid = getNodeidFromHash(message.nodeid);       
+            await viewer.model.setNodeMatrixCollab(nodeid, Communicator.Matrix.fromJson(message.matrix));
         }
             break;
         case "isolate": {           
@@ -1112,6 +1219,8 @@ function createMeshDataFromJson(json) {
 
 
 function createMeshInstanceDataFromJson(json) {
+
+    json._meshId[1] = getMeshidFromHash(json._meshId[1]);
 
     let meshInstanceData = new Communicator.MeshInstanceData(json._meshId);
     if (json._faceColor) {
