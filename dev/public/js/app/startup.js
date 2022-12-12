@@ -49,6 +49,18 @@ function handleLock() {
 }
 
 
+var ttt = 1;
+function updateRoomData() {
+    hcCollab.updateRoomData({test:ttt});
+    ttt++;
+}
+
+async function getRoomData() {
+    let res = await hcCollab.getRoomData();
+    console.log(res);
+}
+
+
 
 function submitChat() {
 
@@ -315,6 +327,18 @@ function createUILayout() {
             name: 'Test Mesh Creation',
             fun: async function () {
                 await testMeshCreation();
+            }
+        },           
+        {
+            name: 'Update Room Data',
+            fun: async function () {
+                updateRoomData();
+            }
+        },           
+        {
+            name: 'Get Room Data',
+            fun: async function () {
+                getRoomData();
             }
         },           
                

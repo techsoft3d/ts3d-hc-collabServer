@@ -10,7 +10,7 @@ var allowUserRooms = true;
 
 exports.createRoom = (roomname, password) => {
 
-  rooms[roomname] = { lockedMaster: "", password: password, users: 0, userroom: false };
+  rooms[roomname] = { lockedMaster: "", password: password, users: 0, userroom: false, data: {} };
 
 };
 
@@ -79,7 +79,7 @@ exports.start = (httpServer, config) => {
 
 
       if (rooms[userinfo[socket.id].roomname] == undefined) {
-        rooms[userinfo[socket.id].roomname] = { lockedMaster: "", password: joininfo.password,users:0, userroom: true };
+        rooms[userinfo[socket.id].roomname] = { lockedMaster: "", password: joininfo.password,users:0, userroom: true, data: {} };
       }      
       rooms[userinfo[socket.id].roomname].users++;
 
@@ -105,8 +105,22 @@ exports.start = (httpServer, config) => {
 
 
     socket.on('chatmessage', (msg) => {
-      sendToRoom(socket, 'chatmessage', msg);
+      sendToRoom(socket, 'chatmessage', msg);  
     });
+
+    socket.on('updateroomdata', (msg) => {
+      let roomdata = JSON.parse(msg);
+      let room = rooms[userinfo[socket.id].roomname];
+      for (let i in roomdata) {
+        room.data[i] = roomdata[i];
+      }
+    });
+
+    socket.on('getroomdata', (msg,callback) => {
+      let room = rooms[userinfo[socket.id].roomname];
+      callback(JSON.stringify(room.data));      
+    });
+
 
     socket.on('run', (msg) => {
       sendToRoom(socket, 'run', msg);

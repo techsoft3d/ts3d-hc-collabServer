@@ -184,6 +184,25 @@ export function submitChat(chatmessage) {
 
 }
 
+
+ 
+export function updateRoomData(roomdata) {
+
+    socket.emit('updateroomdata', JSON.stringify(roomdata));
+
+}
+
+
+ 
+export async function getRoomData() {
+    return new Promise((resolve, reject) => {   
+    socket.emit('getroomdata',"",(response) => {
+        resolve(JSON.parse(response));
+    });
+    });
+}
+
+
 export function setSuspendSend(value) {
     suspendSend = value;
 }
