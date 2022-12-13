@@ -603,9 +603,10 @@ async function loadSubtreeFromScsFileCustom(a, b, c) {
 
         sendMessage('loadsubtree', { a: a, b: b, c: c});
     }
-    await viewer.model.loadSubtreeFromScsFileCollab(a, b, c);
+    let res = await viewer.model.loadSubtreeFromScsFileCollab(a, b, c);
     let op = viewer.operatorManager.getOperator(Communicator.OperatorId.Walk);
     op.resetDefaultWalkSpeeds();
+    return res;
 }
 
 
