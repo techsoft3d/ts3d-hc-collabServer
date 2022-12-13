@@ -27,6 +27,7 @@ var messageQueue = [];
 var messageProcessing = false;
 
 var syncCamera = true;
+var syncSelection = true;
 var showCameraWidgets = false;
 
 var myCameraWidgetManager;
@@ -109,6 +110,18 @@ export function handleResize() {
         mySpriteManager.handleResize();
     }
 }
+
+export function setSyncSelection(sync) {
+    syncSelection = sync;
+
+}
+
+export function getSyncSelection() {
+    return syncSelection;
+}
+
+
+
 export function setSyncCamera(sync) {
     syncCamera = sync;
     if (sync) {
@@ -120,7 +133,7 @@ export function setSyncCamera(sync) {
 
 }
 
-export function getSyncCamera(sync) {
+export function getSyncCamera() {
     return syncCamera;
 }
 
@@ -252,7 +265,7 @@ function cameraChanged(cam) {
 
 function selectionChanged(cam) {
 
-    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient && syncSelection) {
         let selarray = [];
         let sels = hwv.selectionManager.getResults();
         for (let i = 0; i < sels.length; i++) {
@@ -288,6 +301,36 @@ async function setNodesFaceColorCustom(nodeIds, color) {
     await viewer.model.setNodesFaceColorCollab(nodeIds, color);
 
 }
+
+
+
+async function setMetallicRoughnessCustom(nodeIds, metallic, roughness) {
+
+    var stack = new Error().stack;
+    if (stack.indexOf("hoops_web_viewer") == -1) {
+
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('metallicroughness', { nodeids: nodeIds, metallic: metallic, roughness:roughness });
+
+        }
+    }
+
+    await viewer.model.setMetallicRoughnessCollab(nodeIds, metallic, roughness);
+
+}
+
+async function unsetMetallicRoughnessCustom(nodeIds) {
+    var stack = new Error().stack;
+    if (stack.indexOf("hoops_web_viewer") == -1) {
+
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('unsetmetallicroughness', { nodeids: nodeIds });
+
+        }
+    }
+    return await viewer.model.unsetMetallicRoughnessCollab(nodeIds);
+}
+
 
 
 
@@ -407,7 +450,7 @@ async function setDrawModeCustom(a) {
 }
 
 async function setProjectionModeCustom(a) {
-    if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+    if (socket && !suspendSend && !suspendInternal && !lockedClient && syncCamera) {
 
         sendMessage('setprojectionmode', { projectionmode: a});
 
@@ -631,6 +674,12 @@ export function initialize(hwv,ui,url,div) {
     hwv.model.createNode = createNodeCustom;
 
 
+    hwv.model.setMetallicRoughnessCollab = hwv.model.setMetallicRoughness;
+    hwv.model.setMetallicRoughness = setMetallicRoughnessCustom;
+
+    hwv.model.unsetMetallicRoughnessCollab = hwv.model.unsetMetallicRoughness;
+    hwv.model.unsetMetallicRoughness = unsetMetallicRoughnessCustom;
+
 
     hwv.model.setNodesFaceColorCollab = hwv.model.setNodesFaceColor;
     hwv.model.setNodesFaceColor = setNodesFaceColorCustom;
@@ -830,28 +879,32 @@ async function handleMessage(message) {
         break;
    
         case "setprojectionmode": {
-            await viewer.view.setProjectionModeCollab(message.projectionmode);
+            if (syncCamera) {
+                await viewer.view.setProjectionModeCollab(message.projectionmode);
+            }
         }
             break;
         case "selection": {
-            let selarray = message.selection;
-            viewer.selectionManager.clear();
-            let sels = [];
-            for (let i = 0; i < selarray.length; i++) {
-                let faceEntity, lineEntity, pointEntity;
-                if (selarray[i].faceEntity)
-                    faceEntity = Communicator.Selection.FaceEntity.fromJson(selarray[i].faceEntity);
-                if (selarray[i].lineEntity)
-                    lineEntity = Communicator.Selection.LineEntity.fromJson(selarray[i].lineEntity);
-                if (selarray[i].pointEntity)
-                    pointEntity = Communicator.Selection.PointEntity.fromJson(selarray[i].pointEntity);
-                if (viewer._modelStructure._assemblyTree.lookupAnyTreeNode(getNodeidFromHash(selarray[i].nodeId))) {
-                    let item = new Communicator.Selection.SelectionItem.create(getNodeidFromHash(selarray[i].nodeId), null, faceEntity, lineEntity, pointEntity);
-                    sels.push(item);
+            if (syncSelection) {
+                let selarray = message.selection;
+                viewer.selectionManager.clear();
+                let sels = [];
+                for (let i = 0; i < selarray.length; i++) {
+                    let faceEntity, lineEntity, pointEntity;
+                    if (selarray[i].faceEntity)
+                        faceEntity = Communicator.Selection.FaceEntity.fromJson(selarray[i].faceEntity);
+                    if (selarray[i].lineEntity)
+                        lineEntity = Communicator.Selection.LineEntity.fromJson(selarray[i].lineEntity);
+                    if (selarray[i].pointEntity)
+                        pointEntity = Communicator.Selection.PointEntity.fromJson(selarray[i].pointEntity);
+                    if (viewer._modelStructure._assemblyTree.lookupAnyTreeNode(getNodeidFromHash(selarray[i].nodeId))) {
+                        let item = new Communicator.Selection.SelectionItem.create(getNodeidFromHash(selarray[i].nodeId), null, faceEntity, lineEntity, pointEntity);
+                        sels.push(item);
+                    }
                 }
-            }
-            for (let i = 0; i < sels.length; i++) {
-                await viewer.selectionManager.add(sels[i]);
+                for (let i = 0; i < sels.length; i++) {
+                    await viewer.selectionManager.add(sels[i]);
+                }
             }
         }
             break;
@@ -911,10 +964,10 @@ async function handleMessage(message) {
                 }
             }
                 break;
-            case "createnode": {
-            let parentnodeid = getNodeidFromHash(message.parentnodeid);       
+        case "createnode": {
+            let parentnodeid = getNodeidFromHash(message.parentnodeid);
 
-            let nodeid = viewer.model.createNode(parentnodeid, message.nodename, message.nodeid, message.localMatrix,message.visibility, message.measurementUnits);
+            let nodeid = viewer.model.createNode(parentnodeid, message.nodename, message.nodeid, message.localMatrix, message.visibility, message.measurementUnits);
             if (message.uniqueid) {
                 addToHash(nodeid, message.uniqueid);
             }
@@ -930,6 +983,24 @@ async function handleMessage(message) {
 
         }
             break;
+        case "metallicroughness": {
+
+            try {
+                await viewer.model.setMetallicRoughnessCollab(message.nodeids, message.metallic, message.roughness);
+            }
+            catch (e) {
+            }
+        }
+            break;
+        case "unsetmetallicroughness": {
+
+            try {
+                await viewer.model.unsetMetallicRoughness(message.nodeids);
+            }
+            catch (e) {
+            }
+        }
+            break;
         case "facecolor": {
 
             try {
@@ -937,8 +1008,8 @@ async function handleMessage(message) {
             }
             catch (e) {
             }
-        }
-            break;
+        }            break;
+
         case "unsetfacecolor": {
             try {
                 await viewer.model.unsetNodesFaceColorCollab(message.nodeids);

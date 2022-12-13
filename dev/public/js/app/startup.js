@@ -21,10 +21,12 @@ function setupNodes() {
 function cameraSync() {
     if (hcCollab.getSyncCamera()) {
         hcCollab.setSyncCamera(false);
+        hcCollab.setSyncSelection(false);
    //     hcCollab.setShowCameraWidgets(true);
     }
     else {
         hcCollab.setSyncCamera(true);
+        hcCollab.setSyncSelection(true);
  //       hcCollab.setShowCameraWidgets(false);
     }
 
@@ -132,6 +134,7 @@ async function hcCollabMessageReceived(msg) {
             }
             if (msg.syncCamera != undefined) {
                  hcCollab.setSyncCamera(msg.syncCamera);
+                 hcCollab.setSyncSelection(msg.syncCamera);
             }
         }
             break;            
