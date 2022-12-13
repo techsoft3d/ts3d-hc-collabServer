@@ -575,14 +575,21 @@ function spriteClickedEvent(sprite) {
     }
 }
 
-export function initialize(hwv,ui,url) {
+export function initialize(hwv,ui,url,div) {
 
     socketURL = url;
 
     myCameraWidgetManager = new CameraWidgetManager(hwv);
 
     mySpriteManager = new SpriteManager(hwv);
-    mySpriteManager.setNativeSpriteContainer("content2");
+    let container = "content";
+    if (div) {
+        container = div;
+    }
+
+    $("#" + container).prepend('<div id="hcCollabSpriteOverlay" style="width: 100%; height: 100%; background: none;z-index:10000;position: absolute;pointer-events:none"></div>');
+
+    mySpriteManager.setNativeSpriteContainer("hcCollabSpriteOverlay");
     mySpriteManager.setSpriteClickedEvent(spriteClickedEvent);
 
     setupMeasureCanvas();

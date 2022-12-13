@@ -1,5 +1,12 @@
 # ts3d-hc-collabserver [![NPM version](https://badge.fury.io/js/ts3d-hc-collabserver.svg)]
 
+
+## Version Update (0.4.0) 
+*  Support for mesh creation & instancing (beta)
+*  Support for Desyncing camera and user avatars
+*  Support for persistent room data
+
+
 ## Overview
 This library adds real-time collaboration support to any HOOPS Communicator based application by synchronizing a subset of the HOOPS Communicator API calls between multiple clients. This includes camera interaction, selection, markup & measurement, as well as cutting planes and various model attributes (visibility, color, matrices, etc.). 
 
@@ -70,7 +77,7 @@ hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
 ```
 
 ## Limitations
-Currently, this library does not sync ALL webviewer API calls. In particular any geometry creation is currently not synced but there are many other calls that are also not handled. The sync support is mostly geared towards viewing though some model manipulations like changing matrices on a node are also supported. In addition, if a new user joins only the camera is synced automatically, though you can provide your own code to sync other client states. Finally, the default HOOPS Communicator UI in some cases manages its own state that might not reflect the state of the webviewer. For now, it is recommended to use your own, custom UI for the collaboration server.
+Currently, this library does not sync ALL webviewer API calls. While mesh and mesh instance creation is supported, support is not complete and many other calls that are also not handled. Also, if a new user joins only the camera is synced automatically, though you can provide your own code to sync other client states. Finally, the default HOOPS Communicator UI in some cases manages its own state that might not reflect the state of the webviewer. For now, it is recommended to use your own, custom UI for the collaboration server to avoid those inconsistencies.
 
 
 Please let us know if you run into any problems or require support for specific functionality with regard to syncing. You can also of course add support yourself, either by forking the project or using the custom message mechanism of the library.
@@ -169,6 +176,49 @@ It is possible for a user to lock a session with the `lockSession()` command. Th
             }
             break;
 ```
+
+
+
+### Updating Room State
+Each Room has its own persistant state object which can be modified and queried by each connected client which makes it easy to synchronize state not directly related to the webviewer specific functionality (and without the use of custom messages). Below is a simple example that keeps a set of variables in sync between clients.
+
+
+```
+
+   var data = {posx:0, posy:0};             //reset initial state on startup
+  
+    if (hcCollab.getActive()) {
+        await hcCollab.updateRoomData(data);    
+    }
+
+
+    function createCube() {
+   
+        if (hcCollab.getActive()) {
+            data = await hcCollab.getRoomData(); //get current state of room
+        }
+    
+        //create the cube
+        //...    
+
+        data.posx+=50;                    //update local state
+
+        if (data.posx > 500) {
+            data.posx = 0;
+            data.posy += 50;
+        }
+
+        if (hcCollab.getActive()) {
+            await hcCollab.updateRoomData(data);   //update room state with local states
+        }
+    }
+   
+```
+
+### Camera Syncing and User Avatars
+By default the webviewer camera is automatically synced across clients. This can be turned off with `hcCollab.setSyncCamera(false)`. If you then also activate the camera widgets for the other users with `hcCollab.setShowCameraWidgets(true)` you can see the camera viewpoint of each user in the room, including the users name. Clicking on the name will take you to the users camera viewpoint.
+
+Make sure to call 'hcCollab.handleResize()' when the webviewer container changes size if camera widgets are active to ensure correct widget positioning.
 
 
 ### Handling Collaboration UI
@@ -519,6 +569,94 @@ None
 
 #### *Return Value*
 True if sending of webviewer collaboration messages to the collaboration server is currently suspended, false otherwise.
+
+
+
+### **getRoomData** 
+
+#### *Description*
+Returns the room data JSON object
+
+#### *Parameters*
+None
+
+#### *Return Value*
+Room Data JSON Object
+
+
+### **updateRoomData** 
+
+#### *Description*
+Sets individiual room data properties. Only the specified properties will be replaced.
+
+#### *Parameters*
+The room data JSON object.
+
+#### *Return Value*
+None
+
+
+### **setSyncCamera** 
+
+#### *Description*
+Enables/disables camera syncing between clients.
+
+#### *Parameters*
+* **enable** - True to enable camera syncing, false to disable.
+
+#### *Return Value*
+None
+
+### **getSyncCamera** 
+
+#### *Description*
+Returns true if camera syncing is enabled.
+
+#### *Parameters*
+None
+
+#### *Return Value*
+True if camera syncing is enabled, false otherwise.
+
+
+
+### **setShowCameraWidgets** 
+
+#### *Description*
+Enables/disables camera widgets for other clients.
+
+#### *Parameters*
+* **enable** - True to enable camera widgets, false to disable.
+
+#### *Return Value*
+None
+
+
+
+### **getShowCameraWidgets** 
+
+#### *Description*
+Returns true if camera widgets are enabled.
+
+#### *Parameters*
+None
+
+#### *Return Value*
+True if camera widgets are enabled, false otherwise.
+
+
+
+
+### **handleResize** 
+
+#### *Description*
+Call this function when the size of the WebViewer container changes to update the camera widget text.
+
+#### *Parameters*
+None
+
+#### *Return Value*
+None
 
 
 
