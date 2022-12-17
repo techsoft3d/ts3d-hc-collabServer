@@ -290,7 +290,7 @@ async function setNodesVisibilityCustom(nodeIds, visibility, initiallyHiddenStay
 async function setNodesFaceColorCustom(nodeIds, color) {
 
     var stack = new Error().stack;
-    if (stack.indexOf("hoops_web_viewer") == -1) {
+    if (stack.indexOf("hoops_web_viewer") == -1 ||  (stack.indexOf("web_viewer_ui") != -1 && stack.indexOf("web_viewer_ui") < stack.indexOf("hoops_web_viewer"))) {
 
         if (socket && !suspendSend && !suspendInternal && !lockedClient) {
             sendMessage('facecolor', { nodeids: nodeIds, color: color.toJson() });
@@ -390,7 +390,7 @@ function createNodeCustom(parentnodeid, nodename,nodeid,localMatrix,visibility, 
 
 async function unsetNodesFaceColorCustom(nodeIds) {
     var stack = new Error().stack;
-    if (stack.indexOf("hoops_web_viewer") == -1) {
+    if (stack.indexOf("hoops_web_viewer") == -1 ||  (stack.indexOf("web_viewer_ui") != -1 && stack.indexOf("web_viewer_ui") < stack.indexOf("hoops_web_viewer"))) {
 
         if (socket && !suspendSend && !suspendInternal && !lockedClient) {
             sendMessage('unsetfacecolor', { nodeids: nodeIds });
