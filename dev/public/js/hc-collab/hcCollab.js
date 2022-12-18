@@ -613,7 +613,7 @@ async function loadSubtreeFromScsFileCustom(a, b, c) {
 function spriteClickedEvent(sprite) {
     for (let i in users) {
         if (users[i].label == sprite) {
-            viewer.view.setCamera(users[i].cameraWidget.getCamera());
+            viewer.view.setCamera(users[i].cameraWidget.getCamera(),1000);
             break;
         }
     }
