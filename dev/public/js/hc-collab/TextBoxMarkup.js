@@ -144,7 +144,7 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     static fromJson(typeManager,json) {
         let markup = new TextBoxMarkupItem(typeManager, Communicator.Point3.fromJson(json.firstPoint), Communicator.Point3.fromJson(json.secondPoint), Communicator.Point3.fromJson(json.secondPointRel), 
         json.font, json.fontSize, Communicator.Color.fromJson(json.backgroundColor), Communicator.Color.fromJson(json.circleColor), json.circleRadius, 
-        json.maxWidth, json.pinned,json.extraDivText ? json.extraDivText : null, json.uniqueid);
+        json.maxWidth, json.pinned,json.extraDivText ? json.extraDivText : null, json.uniqueid,json.userdata);
         markup.setText(decodeURIComponent(json.text));
         markup.deselect();
         return markup;
@@ -161,7 +161,8 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
 
     
 
-    constructor(typeManager, firstPoint, secondPoint = null,secondPointRel = null,fontStyle = "monospace", fontSize = "12px", backgroundColor =  new Communicator.Color(238,243,249), circleColor = new Communicator.Color(128,128,255), circleRadius = 4.0, maxWidth = 300, pinned = false, extraDiv = null,uniqueid = null) {
+    constructor(typeManager, firstPoint, secondPoint = null,secondPointRel = null,fontStyle = "monospace", fontSize = "12px", backgroundColor =  new Communicator.Color(238,243,249),
+         circleColor = new Communicator.Color(128,128,255), circleRadius = 4.0, maxWidth = 300, pinned = false, extraDiv = null,uniqueid = null, userdata = null) {
         super();
         this._textBoxMarkupTypeManager = typeManager;
         this._viewer = typeManager._viewer;
@@ -179,21 +180,10 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
         this._firstPoint = firstPoint.copy();
         this._allowEditing = true;
         this._extraDivText = extraDiv;
-
-        // let test= $('<div style="pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><span>Peter</span><div style="pointer-events:all;position:absolute;right:0px;top:1px;width:10px;height:inherit;cursor:pointer">X</div></div>');        
-
-        // $("body").append(test);
-        // let test2 = $(test).children()[1];
-        // $(test2).on("click", (e) => { 
-        //     let tm = textBoxMarkupOperator.getTextBoxTypeManager();
-        //     tm.delete(e.target.parentElement.parentElement.id);
-        // });
-        // this._extraDivText = test;
-
+        this._userdata = userdata;
 
         this._selected = false;
         
-     
         this._textHit = true;
         this._maxWidth = maxWidth;
 
@@ -216,6 +206,9 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
         this._initialize();
     }
 
+    getUserData() {
+        return this._userdata;
+    }
 
     getSelected() {
         return this._selected;
@@ -268,7 +261,9 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
             "maxWidth": this._maxWidth,
             "pinned": this._pinned,
             "allowEditing": this._allowEditing,
-            "text": this._textBoxText ? encodeURIComponent($(this._textBoxText).val()) : ""
+            "text": this._textBoxText ? encodeURIComponent($(this._textBoxText).val()) : "",
+            "userdata": this._userdata,
+
 //            "extraDivText": encodeURIComponent($(this._extraDivText).val())
         };
         return json;

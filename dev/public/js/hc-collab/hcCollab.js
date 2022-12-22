@@ -99,7 +99,7 @@ function createMarkupItemCallback(manager, pos) {
     let extradiv = createExtraDiv(localUserName + " (You)");
     let backgroundColor = new Communicator.Color(users[socket.id].color[0],users[socket.id].color[1],users[socket.id].color[2]);
     let markup = new TextBoxMarkupItem(manager, pos,undefined,undefined,undefined,undefined,backgroundColor,
-    undefined,undefined,undefined,true,extradiv);
+    undefined,undefined,undefined,true,extradiv,undefined,{username:localUserName,userid:socket.id});
 
     return markup;
 }
@@ -1231,12 +1231,41 @@ export async function connect(roomname, username, password) {
             let cam = Communicator.Camera.fromJson(state.camera);
             viewer.view.setCamera(cam);
         }
-       
+
+        if (state.textBoxes) {
+            for (let i = 0; i < state.textBoxes.length; i++) {
+                let json = state.textBoxes[i];
+                json.extraDivText = createExtraDiv(json.userdata.username);
+                let backgroundColor;
+                if (users[json.userdata.userid]) {
+                    let user = users[json.userdata.userid];
+                    backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
+                }
+                else {
+                    backgroundColor = new Communicator.Color(255,255,255);
+                }
+
+                json.backgroundColor = backgroundColor;
+                let markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
+                textBoxMarkupTypeManager.add(markup);                
+            }
+            setTimeout(function() {
+                textBoxMarkupTypeManager.refreshMarkup();
+            }, 100);
+        }
+
+
+           
     });
 
     socket.on('sendInitialState', function (msg) {
       
         let state = { type:'sendInitialState', camera: viewer.view.getCamera().toJson()};
+        if (textBoxMarkupTypeManager) { 
+            state.textBoxes = textBoxMarkupTypeManager.exportMarkup();
+            
+        }
+
         if (messageReceivedCallback) {
             let  keepRunning = messageReceivedCallback(state);
             if (!keepRunning) {
