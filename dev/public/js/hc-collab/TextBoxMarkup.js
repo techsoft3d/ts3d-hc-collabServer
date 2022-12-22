@@ -479,8 +479,8 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
 
     _setupTextDiv() {
         let html = "";
-        html += '<div id="' + this._uniqueid + '" style="max-width:' + this._maxWidth + 'px;display:flex;background-color:#e8e5ff;outline-style:solid;outline-width:2px;position: absolute;';
-        html += 'top:0px; left: 0px;width:50px;outline-color: rgb(76, 135, 190);"background: rgb(' + this._backgroundColor.r + ',' + this._backgroundColor.g + ',' + this._backgroundColor.b + ');>';
+        html += '<div id="' + this._uniqueid + '" style="max-width:' + this._maxWidth + 'px;display:flex;outline-style:solid;outline-width:2px;position: absolute;';
+        html += 'top:0px; left: 0px;width:50px;outline-color: rgb(76, 135, 190);background-color: rgb(' + this._backgroundColor.r + ',' + this._backgroundColor.g + ',' + this._backgroundColor.b + ');">';
         html += '<textarea autofocus style="max-width:' + this._maxWidth + 'px;margin: 1px 0px 3px 3px; resize: none;font-family:' + this._font + ';font-size:' + this._fontSize + ';height:' + (parseInt(this._fontSize)+3) + 'px;position: relative;outline: none;border: none;word-break: break-word;padding: 0 0 0 0;background-color: transparent;width: 100px;flex-grow: 1;overflow: hidden;"></textarea>';
         html += '</div>';
 

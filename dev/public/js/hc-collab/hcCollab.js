@@ -47,7 +47,7 @@ var textBoxMarkupOperator = null;
 
 var users = [];
 
-var userColors = [[255,0,0],[0,255,0],[0,0,255],[255,0,255],[0,255,255],[255,128,0],[128,255,0],[0,255,128],[0,128,255],[128,0,255],[255,0,128],[255,128,128],[128,255,128],[128,128,255],[255,128,255],[255,255,128],[128,255,255],[255,255,255]];
+var userColors = [[255,128,128],[0,255,0],[164,164,255],[255,0,255],[0,255,255],[255,128,0],[128,255,0],[0,255,128],[0,128,255],[128,0,255],[255,0,128],[255,128,128],[128,255,128],[128,128,255],[255,128,255],[255,255,128],[128,255,255],[255,255,255]];
 var currentUserColor = 0;
  
 function generateGUID() {
@@ -77,8 +77,9 @@ function textBoxMarkupUpdated(markup) {
 
 function createMarkupItemCallback(manager, pos) {
     let extradiv = createExtraDiv(localUserName + " (You)");
-    let markup = new TextBoxMarkupItem(manager, pos,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,
-        extradiv);
+    let backgroundColor = new Communicator.Color(users[socket.id].color[0],users[socket.id].color[1],users[socket.id].color[2]);
+    let markup = new TextBoxMarkupItem(manager, pos,undefined,undefined,undefined,undefined,backgroundColor,
+    undefined,undefined,undefined,undefined,extradiv);
 
     return markup;
 }
@@ -882,7 +883,7 @@ var dc2= null;
 
 
 function createExtraDiv(text) {
-    let test= $('<div style="overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><span>' + text +'</span><div style="pointer-events:all;position:absolute;right:0px;top:1px;width:10px;height:inherit;cursor:pointer">X</div></div>');        
+    let test= $('<div style="overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 12px)">' + text +'</div><div style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div></div>');        
     $("body").append(test);
     let test2 = $(test).children()[1];
     $(test2).on("click", (e) => { 
@@ -902,7 +903,9 @@ async function handleMessage(message) {
             if (!markup) {
               
                 json.extraDivText = createExtraDiv(message.user);
+                let backgroundColor = new Communicator.Color(users[message.userid].color[0],users[message.userid].color[1],users[message.userid].color[2]);
 
+                json.backgroundColor = backgroundColor;
                 let markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
                 textBoxMarkupTypeManager.add(markup);
             }
