@@ -56,7 +56,10 @@ export class TextBoxMarkupTypeManager {
     delete(uniqueid) {
         for (let i=0;i<this._markups.length;i++) {
 
-            if (this._markups[i].getUniqueId() == uniqueid) {            
+            if (this._markups[i].getUniqueId() == uniqueid) {    
+                if (this.getMarkupUpdatedCallback()) {
+                    this.getMarkupUpdatedCallback()(this._markups[i], true);
+                }        
                 this._viewer.markupManager.unregisterMarkup(this._markups[i].getMarkupId());
                 this._markups[i].destroy();
                 this._markups.splice(i,1);
@@ -227,6 +230,9 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
 
     destroy() {
         $(this._textBoxDiv).remove();
+        if (!this._textBoxMarkupTypeManager.getUseMarkupManager()) {
+            $(this._svgElement).remove();
+        }
     }
 
     setText(text) {
@@ -479,7 +485,7 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
 
     _setupTextDiv() {
         let html = "";
-        html += '<div id="' + this._uniqueid + '" style="max-width:' + this._maxWidth + 'px;display:flex;outline-style:solid;outline-width:2px;position: absolute;';
+        html += '<div id="' + this._uniqueid + '" style="z-index:1;max-width:' + this._maxWidth + 'px;display:flex;outline-style:solid;outline-width:2px;position: absolute;';
         html += 'top:0px; left: 0px;width:50px;outline-color: rgb(76, 135, 190);background-color: rgb(' + this._backgroundColor.r + ',' + this._backgroundColor.g + ',' + this._backgroundColor.b + ');">';
         html += '<textarea autofocus style="max-width:' + this._maxWidth + 'px;margin: 1px 0px 3px 3px; resize: none;font-family:' + this._font + ';font-size:' + this._fontSize + ';height:' + (parseInt(this._fontSize)+3) + 'px;position: relative;outline: none;border: none;word-break: break-word;padding: 0 0 0 0;background-color: transparent;width: 100px;flex-grow: 1;overflow: hidden;"></textarea>';
         html += '</div>';
@@ -588,6 +594,10 @@ export class TextBoxMarkupOperator {
         // this._mouseActivationCallback = function(event) {
         //     return (event.getButton() == Communicator.Button.Left && event.shiftDown());
         // };
+    }
+
+    setAllowCreation(allowCreation) {
+        this._allowCreation = allowCreation;
     }
 
     getTextBoxTypeManager() {

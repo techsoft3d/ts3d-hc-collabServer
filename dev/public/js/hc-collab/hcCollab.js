@@ -66,9 +66,29 @@ var nodeToGUIDMeshHash = [];
 var GUIDtoNodeMeshHash = [];
 
 
-function textBoxMarkupUpdated(markup) {
+function createExtraDiv(text) {
+    let html ="";
+    html += '<div style="overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;';
+    html += 'outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 12px)">' + text +'</div>';
+    html += '<div style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div>;';
+    html += '</div>';
+    let test= $(html);        
+    $("body").append(test);
+    let test2 = $(test).children()[1];
+    $(test2).on("click", (e) => { 
+        textBoxMarkupTypeManager.delete(e.target.parentElement.parentElement.id);
+    });
+    return test;
+}
+
+
+function textBoxMarkupUpdated(markup, deleted) {
 
     if (socket &&  !suspendInternal) {
+        if (deleted) {
+            sendMessage('textboxmarkupdeleted', {uniqueid:markup.getUniqueId()});
+            return;
+        }
         let json = markup.toJson();
         sendMessage('textboxmarkupupdated', {textboxdata:json});
     }    
@@ -79,7 +99,7 @@ function createMarkupItemCallback(manager, pos) {
     let extradiv = createExtraDiv(localUserName + " (You)");
     let backgroundColor = new Communicator.Color(users[socket.id].color[0],users[socket.id].color[1],users[socket.id].color[2]);
     let markup = new TextBoxMarkupItem(manager, pos,undefined,undefined,undefined,undefined,backgroundColor,
-    undefined,undefined,undefined,undefined,extradiv);
+    undefined,undefined,undefined,true,extradiv);
 
     return markup;
 }
@@ -89,10 +109,16 @@ export function initializeTextBoxMarkup() {
     textBoxMarkupTypeManager.setMarkupUpdatedCallback(textBoxMarkupUpdated);
 
     textBoxMarkupOperator = new TextBoxMarkupOperator(hwv, textBoxMarkupTypeManager);
+    textBoxMarkupOperator.setAllowCreation(0);
 
     textBoxMarkupOperator.setCreateMarkupItemCallback(createMarkupItemCallback);
     const markupOperatorHandle = viewer.operatorManager.registerCustomOperator(textBoxMarkupOperator);
     viewer.operatorManager.push(markupOperatorHandle);
+}
+
+export function setTextBoxMarkupAllowCreation(allow) {
+    textBoxMarkupOperator.setAllowCreation(allow);
+
 }
 
 
@@ -878,20 +904,6 @@ function handleMessageQueue(message) {
         }, 10);
     }
 }
-var dc1 = null;
-var dc2= null;
-
-
-function createExtraDiv(text) {
-    let test= $('<div style="overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 12px)">' + text +'</div><div style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div></div>');        
-    $("body").append(test);
-    let test2 = $(test).children()[1];
-    $(test2).on("click", (e) => { 
-        textBoxMarkupTypeManager.delete(e.target.parentElement.parentElement.id);
-    });
-    return test;
-}
-
 
 async function handleMessage(message) {
     suspendInternal = true;
@@ -915,6 +927,10 @@ async function handleMessage(message) {
                 markup._secondPointRel = Communicator.Point2.fromJson(json.secondPointRel);
                 markup.setText(decodeURIComponent(json.text));
             }
+        }
+        break;
+        case "textboxmarkupdeleted": {
+            textBoxMarkupTypeManager.delete(message.uniqueid);
         }
         break;
         case "camera": 

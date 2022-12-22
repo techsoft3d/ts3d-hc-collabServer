@@ -215,7 +215,7 @@ function setupKinematics() {
 
 async function msready() {
 
-    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/microengine.scs");
+    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/arboleda.scs");
 
 //    setupKinematics();
   
@@ -344,7 +344,13 @@ function createUILayout() {
             fun: async function () {
                 getRoomData();
             }
-        },                                  
+        },          
+        {
+            name: 'Create Singe Textbox Markup',
+            fun: async function () {
+                hcCollab.setTextBoxMarkupAllowCreation(1);
+            }
+        },                                
     ];
 
     $('#viewermenu1button').contextMenu(viewermenu, undefined, {
