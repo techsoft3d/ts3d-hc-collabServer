@@ -8,6 +8,13 @@ export class TextBoxMarkupTypeManager {
 
         let _this = this;
         if (!this._useMarkupManager) {
+            new ResizeObserver(function () {
+                setTimeout(function () {
+                    _this.refreshMarkup();
+                    }, 250);
+            }).observe(this._viewer.getViewElement());
+
+
             this._viewer.setCallbacks({
                 camera: function () {
                     setTimeout(function () {
@@ -481,7 +488,7 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     _setupTextDiv() {
         let html = "";
         html += '<div id="' + this._uniqueid + '" style="z-index:1;max-width:' + this._maxWidth + 'px;display:flex;outline-style:solid;outline-width:2px;position: absolute;';
-        html += 'top:0px; left: 0px;width:50px;outline-color: rgb(76, 135, 190);background-color: rgb(' + this._backgroundColor.r + ',' + this._backgroundColor.g + ',' + this._backgroundColor.b + ');">';
+        html += 'top:0px; left: 0px;width:100px;outline-color: rgb(76, 135, 190);background-color: rgb(' + this._backgroundColor.r + ',' + this._backgroundColor.g + ',' + this._backgroundColor.b + ');">';
         html += '<textarea autofocus style="max-width:' + this._maxWidth + 'px;margin: 1px 0px 3px 3px; resize: none;font-family:' + this._font + ';font-size:' + this._fontSize + ';height:' + (parseInt(this._fontSize)+3) + 'px;position: relative;outline: none;border: none;word-break: break-word;padding: 0 0 0 0;background-color: transparent;width: 100px;flex-grow: 1;overflow: hidden;"></textarea>';
         html += '</div>';
 
@@ -540,6 +547,7 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     _calculateMaxTextWidth() {
         let ctxd = document.getElementById("measurecanvas").getContext('2d');
         let text = $(this._textBoxText).val();
+      
         let textArray = text.split("\n");
         let rows = 0;
         let maxTextWidth = 0;
@@ -550,6 +558,10 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
            if (m.width >  maxTextWidth) {
                 maxTextWidth = m.width;
             }
+        }
+
+        if (maxTextWidth  < 90) {
+            maxTextWidth = 90;
         }
        
         return {width: maxTextWidth + 10};
