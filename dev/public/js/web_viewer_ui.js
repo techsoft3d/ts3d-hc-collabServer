@@ -3565,9 +3565,9 @@ return __assign.apply(this, arguments)
                 d.setXRayColor(e.ElementType.Lines, a._defaultXRayColor);
                 d.setXRayColor(e.ElementType.Points, a._defaultXRayColor);
                 d.setBackgroundColor(a._defaultBackgroundColor, a._defaultBackgroundColor);
-                this._viewer.getViewElement().addEventListener("mouseenter", function() {
-                    b._viewer.focusInput(!0)
-                })
+                // this._viewer.getViewElement().addEventListener("mouseenter", function() {
+                // //    b._viewer.focusInput(!0)
+                // })
             };
             a.prototype.setDeselectOnIsolate = function(b) {
                 this._isolateZoomHelper.setDeselectOnIsolate(b)

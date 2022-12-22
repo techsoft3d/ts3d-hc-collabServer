@@ -236,6 +236,7 @@ async function msready() {
     hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
     hcCollab.setSyncCamera(true);
     hcCollab.setShowCameraWidgets(true);
+    hcCollab.initializeTextBoxMarkup();
 
 }
 
@@ -343,9 +344,7 @@ function createUILayout() {
             fun: async function () {
                 getRoomData();
             }
-        },           
-               
-        
+        },                                  
     ];
 
     $('#viewermenu1button').contextMenu(viewermenu, undefined, {

@@ -1,10 +1,17 @@
 import { CameraWidget } from './CameraWidget.js';
 import { CameraWidgetManager } from './CameraWidget.js';
 import { SpriteManager } from './SpriteManager.js';
-import { Sprite } from './SpriteManager.js';
+
+import { TextBoxMarkupTypeManager } from './TextBoxMarkup.js';
+import { TextBoxMarkupItem} from './TextBoxMarkup.js';
+import { TextBoxMarkupOperator} from './TextBoxMarkup.js';
+
+export { TextBoxMarkupTypeManager } from './TextBoxMarkup.js';
+export { TextBoxMarkupItem} from './TextBoxMarkup.js';
+export { TextBoxMarkupOperator} from './TextBoxMarkup.js';
+
 
 var socket = null;
-var cameraFromCollab = false;
 
 var suspendSend = false;
 var suspendInternal = false;
@@ -33,6 +40,10 @@ var showCameraWidgets = false;
 var myCameraWidgetManager;
 var mySpriteManager = null;
 
+var textBoxMarkupTypeManager = null;
+var textBoxMarkupOperator = null;
+
+
 
 var users = [];
 
@@ -53,6 +64,35 @@ var GUIDtoNodeHash = [];
 
 var nodeToGUIDMeshHash = [];
 var GUIDtoNodeMeshHash = [];
+
+
+function textBoxMarkupUpdated(markup) {
+
+    if (socket &&  !suspendInternal) {
+        let json = markup.toJson();
+        sendMessage('textboxmarkupupdated', {textboxdata:json});
+    }    
+}
+
+
+function createMarkupItemCallback(manager, pos) {
+    let extradiv = createExtraDiv(localUserName + " (You)");
+    let markup = new TextBoxMarkupItem(manager, pos,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,
+        extradiv);
+
+    return markup;
+}
+
+export function initializeTextBoxMarkup() {
+    textBoxMarkupTypeManager = new TextBoxMarkupTypeManager(viewer,false);
+    textBoxMarkupTypeManager.setMarkupUpdatedCallback(textBoxMarkupUpdated);
+
+    textBoxMarkupOperator = new TextBoxMarkupOperator(hwv, textBoxMarkupTypeManager);
+
+    textBoxMarkupOperator.setCreateMarkupItemCallback(createMarkupItemCallback);
+    const markupOperatorHandle = viewer.operatorManager.registerCustomOperator(textBoxMarkupOperator);
+    viewer.operatorManager.push(markupOperatorHandle);
+}
 
 
 
@@ -351,6 +391,9 @@ async function createMeshCustom(meshdata) {
     return  await viewer.model.createMeshCollab(meshdata);
 
 }
+
+
+
 
 async function createMeshInstanceCustom(meshinstancedata, nodeid) {
     var stack = new Error().stack;
@@ -838,10 +881,39 @@ var dc1 = null;
 var dc2= null;
 
 
+function createExtraDiv(text) {
+    let test= $('<div style="overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><span>' + text +'</span><div style="pointer-events:all;position:absolute;right:0px;top:1px;width:10px;height:inherit;cursor:pointer">X</div></div>');        
+    $("body").append(test);
+    let test2 = $(test).children()[1];
+    $(test2).on("click", (e) => { 
+        textBoxMarkupTypeManager.delete(e.target.parentElement.parentElement.id);
+    });
+    return test;
+}
+
 
 async function handleMessage(message) {
     suspendInternal = true;
     switch (message.type) {
+        case "textboxmarkupupdated": {
+    
+            let json = message.textboxdata;
+            let markup = textBoxMarkupTypeManager.getByID(json.uniqueid);
+            if (!markup) {
+              
+                json.extraDivText = createExtraDiv(message.user);
+
+                let markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
+                textBoxMarkupTypeManager.add(markup);
+            }
+            else {
+                markup.setFirstPoint(Communicator.Point3.fromJson(json.firstPoint));
+                markup.setSecondPoint(Communicator.Point3.fromJson(json.secondPoint));
+                markup._secondPointRel = Communicator.Point2.fromJson(json.secondPointRel);
+                markup.setText(decodeURIComponent(json.text));
+            }
+        }
+        break;
         case "camera": 
         case "camera2": 
         {
@@ -853,7 +925,10 @@ async function handleMessage(message) {
                     if (!myCameraWidgetManager.isActive()) {
                         await myCameraWidgetManager.initialize();
                     }
-                    user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]), new Communicator.Color(user.color[0], user.color[1], user.color[2]));
+//                    user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]), new Communicator.Color(user.color[0], user.color[1], user.color[2]));
+                   user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]), new Communicator.Color(user.color[0], user.color[1], user.color[2]),
+                    0.4,true,false,1000);
+
                 }
                 if (!user.label) {
                    let divid = createLabel(message.user, user.color);
@@ -869,7 +944,6 @@ async function handleMessage(message) {
             }
 
             if (message.type == "camera" && syncCamera) {
-                cameraFromCollab = true;
                 await viewer.view.setCamera(cam);
 
                 let message = { camera: cam.toJson() };
@@ -1136,7 +1210,6 @@ export async function connect(roomname, username, password) {
 
         if (state.camera) {
             let cam = Communicator.Camera.fromJson(state.camera);
-            cameraFromCollab = true;
             viewer.view.setCamera(cam);
         }
        
