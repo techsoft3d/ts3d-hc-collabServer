@@ -114,6 +114,7 @@ export function initializeTextBoxMarkup() {
     textBoxMarkupOperator.setCreateMarkupItemCallback(createMarkupItemCallback);
     const markupOperatorHandle = viewer.operatorManager.registerCustomOperator(textBoxMarkupOperator);
     viewer.operatorManager.push(markupOperatorHandle);
+    return markupOperatorHandle;
 }
 
 export function setTextBoxMarkupAllowCreation(allow) {

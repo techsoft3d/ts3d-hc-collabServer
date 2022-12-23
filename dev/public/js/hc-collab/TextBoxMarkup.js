@@ -697,6 +697,8 @@ export class TextBoxMarkupOperator {
 
       
         this._offset = new Communicator.Point2(0,0);
+        this._updateActiveMarkupItem(position);
+
         this._handled = true;
     }
 
