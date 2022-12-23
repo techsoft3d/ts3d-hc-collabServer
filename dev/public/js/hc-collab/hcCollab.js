@@ -65,18 +65,40 @@ var GUIDtoNodeHash = [];
 var nodeToGUIDMeshHash = [];
 var GUIDtoNodeMeshHash = [];
 
+function updatePinned(markup) {
+
+    let pinnedPart = $(markup.getExtraDiv()).children()[2];
+    if (markup.getPinned()) {
+        $($(pinnedPart).children()[0]).css("background-color", "black");
+        $(pinnedPart).prop('title', 'Unpin');
+    }
+    else {
+        $($(pinnedPart).children()[0]).css("background-color", "white");
+        $(pinnedPart).prop('title', 'Pin');
+    }
+}
 
 function createExtraDiv(text) {
     let html ="";
     html += '<div style="overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;';
-    html += 'outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 12px)">' + text +'</div>';
-    html += '<div style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div>;';
+    html += 'outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 23px)">' + text +'</div>';
+    html += '<div title = "Delete" style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div>;';
+    html += '<div title = "Unpin" style="pointer-events:all;position:absolute;right:13px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer"><span style="pointer-events:none;height:7px;width:7px;top:4px;left:2px;position:absolute;outline-color:black;outline-style:solid;outline-width:1px;border-radius:50%;display:inline-block;background-color:black"></span></div>;';
     html += '</div>';
     let test= $(html);        
     $("body").append(test);
     let test2 = $(test).children()[1];
     $(test2).on("click", (e) => { 
         textBoxMarkupTypeManager.delete(e.target.parentElement.parentElement.id);
+        let markup = textBoxMarkupTypeManager.getByID(e.target.parentElement.parentElement.id);
+    });
+
+
+    let test3 = $(test).children()[2];
+    $(test3).on("click", (e) => { 
+        let markup = textBoxMarkupTypeManager.getByID(e.target.parentElement.parentElement.id);        
+        markup.setPinned(!markup.getPinned());
+        updatePinned(markup);
     });
     return test;
 }
@@ -919,7 +941,7 @@ async function handleMessage(message) {
                 let backgroundColor = new Communicator.Color(users[message.userid].color[0],users[message.userid].color[1],users[message.userid].color[2]);
 
                 json.backgroundColor = backgroundColor;
-                let markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
+                markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
                 textBoxMarkupTypeManager.add(markup);
             }
             else {
@@ -927,7 +949,11 @@ async function handleMessage(message) {
                 markup.setSecondPoint(Communicator.Point3.fromJson(json.secondPoint));
                 markup._secondPointRel = Communicator.Point2.fromJson(json.secondPointRel);
                 markup.setText(decodeURIComponent(json.text));
+                markup.setPinned(json.pinned);
             }
+
+            updatePinned(markup);            
+
         }
         break;
         case "textboxmarkupdeleted": {
@@ -1248,7 +1274,9 @@ export async function connect(roomname, username, password) {
 
                 json.backgroundColor = backgroundColor;
                 let markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
-                textBoxMarkupTypeManager.add(markup);                
+                textBoxMarkupTypeManager.add(markup);     
+                updatePinned(markup);
+           
             }
             setTimeout(function() {
                 textBoxMarkupTypeManager.refreshMarkup();
