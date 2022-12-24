@@ -25,7 +25,7 @@ var localUserName;
 var viewer;
 var viewerui = null;
 
-var messageReceivedCallback = null;
+var messageReceivedCallbacks = [];
 
 var socketURL;
 
@@ -325,8 +325,8 @@ export function sendCustomMessage(message) {
 
 
 
-export function setMessageReceivedCallback(callback) {
-    messageReceivedCallback = callback;    
+export function registerMessageReceivedCallback(callback) {
+    messageReceivedCallbacks.push(callback);
 }
 
 function sendMessage(messageType, message) {
@@ -1215,6 +1215,16 @@ async function handleMessage(message) {
 }
 
 
+function processCallbacks(message) {
+    for (let i=0; i<messageReceivedCallbacks.length; i++) {
+        let callback = messageReceivedCallbacks[i];
+       if (!callback(message)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export async function connect(roomname, username, password) {
 
     localUserName = username;
@@ -1226,13 +1236,10 @@ export async function connect(roomname, username, password) {
     socket.on('hcmessage', async function (msg) {
 
         let message = JSON.parse(msg);
-        if (messageReceivedCallback) {
-            let  keepRunning = messageReceivedCallback(message);
-            if (!keepRunning) {
-                return;
-            }
-        }
 
+        if (!processCallbacks(message)) {
+            return;
+        }         
         switch (message.type) {                
             case "custommessage": {
 
@@ -1247,12 +1254,10 @@ export async function connect(roomname, username, password) {
     socket.on('initialState', function (msg) {
         let state = JSON.parse(msg);
         state.type = "initialState";
-        if (messageReceivedCallback) {
-            let  keepRunning = messageReceivedCallback(state);
-            if (!keepRunning) {
-                return;
-            }
-        }
+        
+        if (!processCallbacks(state)) {
+            return;
+        }       
 
         if (state.camera) {
             let cam = Communicator.Camera.fromJson(state.camera);
@@ -1295,12 +1300,10 @@ export async function connect(roomname, username, password) {
             
         }
 
-        if (messageReceivedCallback) {
-            let  keepRunning = messageReceivedCallback(state);
-            if (!keepRunning) {
-                return;
-            }
-        }
+        
+        if (!processCallbacks(state)) {
+            return;
+        }      
 
         socket.emit('initialState',JSON.stringify({recepient: msg, state:state}));
 
@@ -1309,12 +1312,10 @@ export async function connect(roomname, username, password) {
     socket.on('lockSession', function (msg) {
                   
         let message = {user: msg, type: "lockSession"};
-        if (messageReceivedCallback) {
-            let  keepRunning = messageReceivedCallback(message);
-            if (!keepRunning) {
-                return;
-            }
-        }  
+         
+        if (!processCallbacks(message)) {
+            return;
+        }      
 
         lockUser = msg;
         lockedClient = true;
@@ -1322,12 +1323,11 @@ export async function connect(roomname, username, password) {
 
     socket.on('unlockSession', function (msg) {
         let message = {type: "unlockSession"};
-        if (messageReceivedCallback) {
-            let  keepRunning = messageReceivedCallback(message);
-            if (!keepRunning) {
-                return;
-            }
-        }   
+
+        if (!processCallbacks(message)) {
+            return;
+        }      
+
         lockedClient = false;        
     });
 
@@ -1336,9 +1336,11 @@ export async function connect(roomname, username, password) {
         lockedClient = false;
         disconnect();
         let message = {type: "connectionLost"};
-        if (messageReceivedCallback) {
-            messageReceivedCallback(message);
-        }     
+
+        if (!processCallbacks(message)) {
+                return;
+        }      
+
      
       });
 
@@ -1349,18 +1351,21 @@ export async function connect(roomname, username, password) {
         }
 
         let message = {user: msg, type: "disconnected"};
-        if (messageReceivedCallback) {
-            messageReceivedCallback(message);
-        }     
+
+         if (!processCallbacks(message)) {
+            return;
+        }      
+
     });
 
     socket.on('chatmessage', function (msg) {
         let message = JSON.parse(msg);
         message.type = "chatmessage";
+        
+        if (!processCallbacks(message)) {
+            return;
+        }      
 
-        if (messageReceivedCallback) {
-            messageReceivedCallback(message);
-        }     
       
     });
 
@@ -1396,9 +1401,10 @@ export async function connect(roomname, username, password) {
             }
         }
 
-        if (messageReceivedCallback) {
-            messageReceivedCallback(message);
-        }     
+        if (!processCallbacks(message)) {
+            return;
+        }      
+
     });
 }
 

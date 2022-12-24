@@ -232,7 +232,7 @@ async function msready() {
 
     hcCollab.initialize(hwv, ui);
 
-    hcCollab.setMessageReceivedCallback(hcCollabMessageReceived);
+    hcCollab.registerMessageReceivedCallback(hcCollabMessageReceived);
     hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
     hcCollab.setSyncCamera(true);
     hcCollab.setShowCameraWidgets(true);
