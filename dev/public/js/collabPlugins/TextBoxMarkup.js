@@ -1,4 +1,4 @@
-export class TextBoxMarkupTypeManager {
+class TextBoxMarkupTypeManager {
 
     constructor(viewer, useMarkupManager = true) {
         this._viewer = viewer;
@@ -145,7 +145,7 @@ export class TextBoxMarkupTypeManager {
 
 
 
-export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
+class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
 
 
     static fromJson(typeManager,json) {
@@ -590,7 +590,7 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
 }
 
 
-export class TextBoxMarkupOperator {
+class TextBoxMarkupOperator {
     constructor(viewer, textBoxMarkupTypeManager = null) {
         
         this._viewer = viewer;

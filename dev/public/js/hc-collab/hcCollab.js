@@ -2,13 +2,6 @@ import { CameraWidget } from './CameraWidget.js';
 import { CameraWidgetManager } from './CameraWidget.js';
 import { SpriteManager } from './SpriteManager.js';
 
-import { TextBoxMarkupTypeManager } from './TextBoxMarkup.js';
-import { TextBoxMarkupItem} from './TextBoxMarkup.js';
-import { TextBoxMarkupOperator} from './TextBoxMarkup.js';
-
-export { TextBoxMarkupTypeManager } from './TextBoxMarkup.js';
-export { TextBoxMarkupItem} from './TextBoxMarkup.js';
-export { TextBoxMarkupOperator} from './TextBoxMarkup.js';
 
 
 var socket = null;
@@ -40,10 +33,6 @@ var showCameraWidgets = false;
 var myCameraWidgetManager;
 var mySpriteManager = null;
 
-var textBoxMarkupTypeManager = null;
-var textBoxMarkupOperator = null;
-
-
 
 var users = [];
 
@@ -64,85 +53,6 @@ var GUIDtoNodeHash = [];
 
 var nodeToGUIDMeshHash = [];
 var GUIDtoNodeMeshHash = [];
-
-function updatePinned(markup) {
-
-    let pinnedPart = $(markup.getExtraDiv()).children()[2];
-    if (markup.getPinned()) {
-        $($(pinnedPart).children()[0]).css("background-color", "black");
-        $(pinnedPart).prop('title', 'Unpin');
-    }
-    else {
-        $($(pinnedPart).children()[0]).css("background-color", "white");
-        $(pinnedPart).prop('title', 'Pin');
-    }
-}
-
-function createExtraDiv(text) {
-    let html ="";
-    html += '<div style="overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;';
-    html += 'outline-width:inherit;outline-style:solid;background-color:white;background: linear-gradient(90deg, #ada9d9, transparent);font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 23px)">' + text +'</div>';
-    html += '<div title = "Delete" style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div>;';
-    html += '<div title = "Unpin" style="pointer-events:all;position:absolute;right:13px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer"><span style="pointer-events:none;height:7px;width:7px;top:4px;left:2px;position:absolute;outline-color:black;outline-style:solid;outline-width:1px;border-radius:50%;display:inline-block;background-color:black"></span></div>;';
-    html += '</div>';
-    let test= $(html);        
-    $("body").append(test);
-    let test2 = $(test).children()[1];
-    $(test2).on("click", (e) => { 
-        textBoxMarkupTypeManager.delete(e.target.parentElement.parentElement.id);
-        let markup = textBoxMarkupTypeManager.getByID(e.target.parentElement.parentElement.id);
-    });
-
-
-    let test3 = $(test).children()[2];
-    $(test3).on("click", (e) => { 
-        let markup = textBoxMarkupTypeManager.getByID(e.target.parentElement.parentElement.id);        
-        markup.setPinned(!markup.getPinned());
-        updatePinned(markup);
-    });
-    return test;
-}
-
-
-function textBoxMarkupUpdated(markup, deleted) {
-
-    if (socket &&  !suspendInternal) {
-        if (deleted) {
-            sendMessage('textboxmarkupdeleted', {uniqueid:markup.getUniqueId()});
-            return;
-        }
-        let json = markup.toJson();
-        sendMessage('textboxmarkupupdated', {textboxdata:json});
-    }    
-}
-
-
-function createMarkupItemCallback(manager, pos) {
-    let extradiv = createExtraDiv(localUserName + " (You)");
-    let backgroundColor = new Communicator.Color(users[socket.id].color[0],users[socket.id].color[1],users[socket.id].color[2]);
-    let markup = new TextBoxMarkupItem(manager, pos,undefined,undefined,undefined,undefined,backgroundColor,
-    undefined,undefined,undefined,true,extradiv,undefined,{username:localUserName,userid:socket.id});
-
-    return markup;
-}
-
-export function initializeTextBoxMarkup() {
-    textBoxMarkupTypeManager = new TextBoxMarkupTypeManager(viewer,false);
-    textBoxMarkupTypeManager.setMarkupUpdatedCallback(textBoxMarkupUpdated);
-
-    textBoxMarkupOperator = new TextBoxMarkupOperator(hwv, textBoxMarkupTypeManager);
-    textBoxMarkupOperator.setAllowCreation(0);
-
-    textBoxMarkupOperator.setCreateMarkupItemCallback(createMarkupItemCallback);
-    const markupOperatorHandle = viewer.operatorManager.registerCustomOperator(textBoxMarkupOperator);
-    viewer.operatorManager.push(markupOperatorHandle);
-    return markupOperatorHandle;
-}
-
-export function setTextBoxMarkupAllowCreation(allow) {
-    textBoxMarkupOperator.setAllowCreation(allow);
-
-}
 
 
 
@@ -255,7 +165,7 @@ export function disconnect() {
 
 export function getLocalUser() {
     if (socket) {
-        return {id:socket.id, name:localUserName};
+        return {id:socket.id, name:localUserName, color:users[socket.id].color};
     }   
 }
 
@@ -287,6 +197,9 @@ export function submitChat(chatmessage) {
 
 }
 
+export function getUserInfo(id) {
+    return users[id];
+}
 
  
 export function updateRoomData(roomdata) {
@@ -314,11 +227,16 @@ export function getSuspendSend() {
     return suspendSend;
 }
 
+export function getInternalSuspend() {
+    return suspendInternal;
+}
+
 
 export function sendCustomMessage(message) {
     if (socket) {
         message.type = "custommessage";
         message.user = localUserName;
+        message.userid = socket.id;
         socket.emit("hcmessage", JSON.stringify(message));
     }
 }
@@ -929,37 +847,15 @@ function handleMessageQueue(message) {
 }
 
 async function handleMessage(message) {
+
     suspendInternal = true;
-    switch (message.type) {
-        case "textboxmarkupupdated": {
     
-            let json = message.textboxdata;
-            let markup = textBoxMarkupTypeManager.getByID(json.uniqueid);
-            if (!markup) {
-              
-                json.extraDivText = createExtraDiv(message.user);
-                let backgroundColor = new Communicator.Color(users[message.userid].color[0],users[message.userid].color[1],users[message.userid].color[2]);
-
-                json.backgroundColor = backgroundColor;
-                markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
-                textBoxMarkupTypeManager.add(markup);
-            }
-            else {
-                markup.setFirstPoint(Communicator.Point3.fromJson(json.firstPoint));
-                markup.setSecondPoint(Communicator.Point3.fromJson(json.secondPoint));
-                markup._secondPointRel = Communicator.Point2.fromJson(json.secondPointRel);
-                markup.setText(decodeURIComponent(json.text));
-                markup.setPinned(json.pinned);
-            }
-
-            updatePinned(markup);            
-
-        }
-        break;
-        case "textboxmarkupdeleted": {
-            textBoxMarkupTypeManager.delete(message.uniqueid);
-        }
-        break;
+    if (!processCallbacks(message)) {
+        suspendInternal = false;
+        return;
+    }         
+    switch (message.type) {
+       
         case "camera": 
         case "camera2": 
         {
@@ -1237,17 +1133,8 @@ export async function connect(roomname, username, password) {
 
         let message = JSON.parse(msg);
 
-        if (!processCallbacks(message)) {
-            return;
-        }         
-        switch (message.type) {                
-            case "custommessage": {
-
-            }
-            break;            
-           default:
-            handleMessageQueue(message);
-        }
+           
+        handleMessageQueue(message);
     });
 
 
@@ -1263,44 +1150,13 @@ export async function connect(roomname, username, password) {
             let cam = Communicator.Camera.fromJson(state.camera);
             viewer.view.setCamera(cam);
         }
-
-        if (state.textBoxes) {
-            for (let i = 0; i < state.textBoxes.length; i++) {
-                let json = state.textBoxes[i];
-                json.extraDivText = createExtraDiv(json.userdata.username);
-                let backgroundColor;
-                if (users[json.userdata.userid]) {
-                    let user = users[json.userdata.userid];
-                    backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
-                }
-                else {
-                    backgroundColor = new Communicator.Color(255,255,255);
-                }
-
-                json.backgroundColor = backgroundColor;
-                let markup = TextBoxMarkupItem.fromJson(textBoxMarkupTypeManager, json);
-                textBoxMarkupTypeManager.add(markup);     
-                updatePinned(markup);
-           
-            }
-            setTimeout(function() {
-                textBoxMarkupTypeManager.refreshMarkup();
-            }, 100);
-        }
-
-
-           
+                   
     });
 
     socket.on('sendInitialState', function (msg) {
       
         let state = { type:'sendInitialState', camera: viewer.view.getCamera().toJson()};
-        if (textBoxMarkupTypeManager) { 
-            state.textBoxes = textBoxMarkupTypeManager.exportMarkup();
-            
-        }
-
-        
+               
         if (!processCallbacks(state)) {
             return;
         }      

@@ -1,7 +1,7 @@
 var myLayout;
 var collaboratorTable;
 var componentSetHash = [];
-
+var textBoxCollabPlugin = null;
 
 function sendCustomMessage() {
 
@@ -236,7 +236,8 @@ async function msready() {
     hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
     hcCollab.setSyncCamera(true);
     hcCollab.setShowCameraWidgets(true);
-    hcCollab.initializeTextBoxMarkup();
+    textBoxCollabPlugin = new TextBoxCollabPlugin(hwv);
+    textBoxCollabPlugin.initialize();
 
 }
 
@@ -348,7 +349,7 @@ function createUILayout() {
         {
             name: 'Create Singe Textbox Markup',
             fun: async function () {
-                hcCollab.setTextBoxMarkupAllowCreation(1);
+                textBoxCollabPlugin.setTextBoxMarkupAllowCreation(1);
             }
         },                                
     ];
