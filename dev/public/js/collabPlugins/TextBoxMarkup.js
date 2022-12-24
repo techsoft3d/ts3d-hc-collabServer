@@ -17,9 +17,11 @@ class TextBoxMarkupTypeManager {
 
             this._viewer.setCallbacks({
                 camera: function () {
-                    setTimeout(function () {
+                  
                     _this.refreshMarkup();
-                    }, 0);
+                    setTimeout(function () {
+                        _this.refreshMarkup();
+                        }, 50);
                 }
             });
         }
