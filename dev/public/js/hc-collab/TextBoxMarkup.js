@@ -281,12 +281,15 @@ export class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     }
 
     setPinned(pinned) {
-        if (this._pinned) {
-            this.unprojectTextAnchor();      
-        }
-        this._pinned = pinned;
-        if (this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()) {
-            this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()(this);
+        if (pinned != this._pinned) {
+            if (this._pinned) {
+                this.setSecondPoint(this._firstPoint);
+            }
+            this._textBoxMarkupTypeManager.refreshMarkup();
+            this._pinned = pinned;
+            if (this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()) {
+                this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()(this);
+            }
         }
     }
 
