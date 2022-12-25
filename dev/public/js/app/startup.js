@@ -319,7 +319,6 @@ function createUILayout() {
         if (hwv != null) {
             hwv.resizeCanvas();
         }
-        hcCollab.handleResize();
     });
     myLayout.init();
 

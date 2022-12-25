@@ -152,7 +152,7 @@ class CameraWidgetCollabPlugin {
             case "isolate":
             {
 
-                this.flushCameraWidgets();
+                await this.flushCameraWidgets();
             }
             break;
             case "predelete": {
