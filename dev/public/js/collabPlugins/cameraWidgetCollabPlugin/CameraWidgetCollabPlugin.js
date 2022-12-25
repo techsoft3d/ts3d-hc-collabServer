@@ -71,7 +71,7 @@ class CameraWidgetCollabPlugin {
             }
         }
         if (deleteManager) {
-            myCameraWidgetManager.deactivate();
+            this.myCameraWidgetManager.deactivate();
         }
         if (unsuspend) {
             hcCollab.setSuspendSend(false);
@@ -141,20 +141,25 @@ class CameraWidgetCollabPlugin {
                         await user.label.setPosition(cam.getPosition());
      
                      }
-    
-                    await user.cameraWidget.update(cam);
-    
-                }                   
-            }
-            break;
-            case "reset":
-            case "clear":
-            case "isolate":
-            {
 
-                await this.flushCameraWidgets();
-            }
-            break;
+                        await user.cameraWidget.update(cam);
+
+                    }
+                }
+                break;
+            case "reset":
+            case "isolate":
+                {
+
+                    await this.flushCameraWidgets();
+                }
+                break;
+            case "clear":
+                {
+
+                    await this.flushCameraWidgets(true);
+                }
+                break;
             case "predelete": {
                 let users = hcCollab.getUsers();
                 for (let i in users) {
