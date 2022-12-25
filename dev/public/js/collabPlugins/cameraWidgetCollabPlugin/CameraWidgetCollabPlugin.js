@@ -12,6 +12,14 @@ class CameraWidgetCollabPlugin {
         this.mySpriteManager.setSpriteClickedEvent(function (sprite) { _this.spriteClickedEvent(sprite); });
         this.showCameraWidgets = false;
         this.setupMeasureCanvas();
+
+        new ResizeObserver(function () {
+            setTimeout(function () {
+                _this.handleResize();
+                }, 250);
+        }).observe(this._viewer.getViewElement());
+
+
     }
 
 

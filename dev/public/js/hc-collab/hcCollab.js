@@ -23,7 +23,6 @@ var messageProcessing = false;
 var syncCamera = true;
 var syncSelection = true;
 
-var mySpriteManager = null;
 
 
 var users = [];
@@ -93,13 +92,6 @@ function getNodeidFromHash(uniqueid) {
     }
     else {
         return uniqueid;
-    }
-}
-
-
-export function handleResize() {
-    if (mySpriteManager) {
-        mySpriteManager.handleResize();
     }
 }
 
@@ -988,12 +980,10 @@ async function handleMessage(message) {
         }
             break;
         case "reset": {
-            await flushCameraWidgets();
             await viewer.model.resetCollab();
         }
             break;
         case "clear": {
-            await flushCameraWidgets(true);
 
             viewer.unsetCallbacks({ camera: cameraChanged });
             await viewer.model.clearCollab();
@@ -1009,7 +999,6 @@ async function handleMessage(message) {
         }
             break;
         case "isolate": {           
-            await flushCameraWidgets();
             await viewer.view.isolateNodesCollab(message.nodeids, 0,
                 message.fitNodes != undefined ? message.fitNodes : undefined, message.initiallyHidden != undefined ? message.initiallyHidden : undefined);
         }
