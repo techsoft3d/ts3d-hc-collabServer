@@ -2,6 +2,7 @@ var myLayout;
 var collaboratorTable;
 var componentSetHash = [];
 var textBoxCollabPlugin = null;
+var cameraWidgetCollabPlugin = null;
 
 function sendCustomMessage() {
 
@@ -20,12 +21,12 @@ function setupNodes() {
 
 function cameraSync() {
     if (hcCollab.getSyncCamera()) {
-        hcCollab.setSyncCamera(false);
+        cameraWidgetCollabPlugin.setSyncCamera(false);
         hcCollab.setSyncSelection(false);
    //     hcCollab.setShowCameraWidgets(true);
     }
     else {
-        hcCollab.setSyncCamera(true);
+        cameraWidgetCollabPlugin.setSyncCamera(true);
         hcCollab.setSyncSelection(true);
  //       hcCollab.setShowCameraWidgets(false);
     }
@@ -133,7 +134,7 @@ async function hcCollabMessageReceived(msg) {
                 hcCollab.setSuspendSend(false);              
             }
             if (msg.syncCamera != undefined) {
-                 hcCollab.setSyncCamera(msg.syncCamera);
+                cameraWidgetCollabPlugin.setSyncCamera(msg.syncCamera);
                  hcCollab.setSyncSelection(msg.syncCamera);
             }
         }
@@ -153,7 +154,7 @@ async function hcCollabMessageReceived(msg) {
             {
                 switch (msg.customType) {
                     case "syncCamera": {
-                        hcCollab.setSyncCamera(msg.syncCamera);
+                        cameraWidgetCollabPlugin.setSyncCamera(msg.syncCamera);
                     }
                     break;
                     case "test": {
@@ -233,11 +234,15 @@ async function msready() {
     hcCollab.initialize(hwv, ui);
 
     hcCollab.registerMessageReceivedCallback(hcCollabMessageReceived);
-    hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
-    hcCollab.setSyncCamera(true);
-    hcCollab.setShowCameraWidgets(true);
+
+    cameraWidgetCollabPlugin = new CameraWidgetCollabPlugin(hwv,"content");
+    cameraWidgetCollabPlugin.setSyncCamera(true);
+    cameraWidgetCollabPlugin.setShowCameraWidgets(true);
+
+    hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999)); 
     textBoxCollabPlugin = new TextBoxCollabPlugin(hwv);
     textBoxCollabPlugin.initialize();
+  
 
 }
 

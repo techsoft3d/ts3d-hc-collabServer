@@ -1,9 +1,3 @@
-import { CameraWidget } from './CameraWidget.js';
-import { CameraWidgetManager } from './CameraWidget.js';
-import { SpriteManager } from './SpriteManager.js';
-
-
-
 var socket = null;
 
 var suspendSend = false;
@@ -28,9 +22,7 @@ var messageProcessing = false;
 
 var syncCamera = true;
 var syncSelection = true;
-var showCameraWidgets = false;
 
-var myCameraWidgetManager;
 var mySpriteManager = null;
 
 
@@ -124,28 +116,11 @@ export function getSyncSelection() {
 
 export function setSyncCamera(sync) {
     syncCamera = sync;
-    if (sync) {
-        flushCameraWidgets();
-    }
-    else {
-        viewer.view.setTransparencyMode(0);       
-    }
 
 }
 
 export function getSyncCamera() {
     return syncCamera;
-}
-
-export function setShowCameraWidgets(show) {
-    showCameraWidgets = show;
-    if (!show) {
-        flushCameraWidgets();       
-    }
-}
-
-export function getShowCameraWidgets() {
-    return showCameraWidgets;
 }
 
 export function getActive() {
@@ -154,7 +129,7 @@ export function getActive() {
 
 export function disconnect() {
     if (socket) {
-        flushCameraWidgets(true);
+        processCallbacks({type:"disconnect"},true);
         socket.disconnect();
         socket = null;
     }
@@ -201,6 +176,9 @@ export function getUserInfo(id) {
     return users[id];
 }
 
+export function getUsers() {
+    return users;
+}
  
 export function updateRoomData(roomdata) {
 
@@ -260,15 +238,9 @@ function sendMessage(messageType, message) {
 
 function cameraChanged(cam) {
     if (!suspendInternal && socket && !suspendSend && !lockedClient) {
-        let message = { camera: viewer.view.getCamera().toJson()};
-        if (syncCamera) {
-            sendMessage("camera", message);
-        }
-        else {
-            sendMessage("camera2", message);
-        }
-    }
-   
+        let message = { camera: viewer.view.getCamera().toJson(), synced: syncCamera};
+        sendMessage("camera", message);
+    }   
 }
 
 function selectionChanged(cam) {
@@ -472,10 +444,11 @@ async function setProjectionModeCustom(a) {
 
 async function resetCustom() {
     if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-        await flushCameraWidgets();
         sendMessage('reset', {});
 
     }
+    processCallbacks({type:"reset"},true);
+
     return await viewer.model.resetCollab();
 }
 
@@ -485,7 +458,9 @@ async function clearCustom() {
         sendMessage('clear', {});
 
     }
-    await flushCameraWidgets(true);
+
+    processCallbacks({type:"clear"},true);
+
     await viewer.model.clearCollab();
     viewer._modelStructure._assemblyTree._dynamicNodeIdSeed = -63;
     let op = viewer.operatorManager.getOperator(Communicator.OperatorId.Walk);
@@ -509,7 +484,7 @@ async function setNodeMatrixCustom(nodeId, matrix) {
 
 async function isolateNodesCustom(nodeIds, duration, fitNodes, initiallyHidden) {
     if (socket && !suspendSend && !suspendInternal && !lockedClient) {
-        await flushCameraWidgets();
+        processCallbacks({type:"isolate"},true);
         let isolateinfo = { nodeids: nodeIds, duration: duration, fitNodes: fitNodes, initiallyHidden: initiallyHidden };
         sendMessage('isolate', { nodeids: nodeIds, duration: duration, fitNodes: fitNodes, initiallyHidden: initiallyHidden });
 
@@ -621,33 +596,15 @@ async function loadSubtreeFromScsFileCustom(a, b, c) {
 }
 
 
-function spriteClickedEvent(sprite) {
-    for (let i in users) {
-        if (users[i].label == sprite) {
-            viewer.view.setCamera(users[i].cameraWidget.getCamera(),1000);
-            break;
-        }
-    }
-}
-
 export function initialize(hwv,ui,url,div) {
 
     socketURL = url;
 
-    myCameraWidgetManager = new CameraWidgetManager(hwv);
-
-    mySpriteManager = new SpriteManager(hwv);
     let container = "content";
     if (div) {
         container = div;
     }
 
-    $("#" + container).prepend('<div id="hcCollabSpriteOverlay" style="width: 100%; height: 100%; background: none;z-index:10000;position: absolute;pointer-events:none"></div>');
-
-    mySpriteManager.setNativeSpriteContainer("hcCollabSpriteOverlay");
-    mySpriteManager.setSpriteClickedEvent(spriteClickedEvent);
-
-    setupMeasureCanvas();
     
     viewer = hwv;
     viewerui = ui;
@@ -850,46 +807,20 @@ async function handleMessage(message) {
 
     suspendInternal = true;
     
-    if (!processCallbacks(message)) {
+    if (!await processCallbacks(message)) {
         suspendInternal = false;
         return;
     }         
     switch (message.type) {
        
-        case "camera": 
-        case "camera2": 
+        case "camera":      
         {
             let cam = Communicator.Camera.fromJson(message.camera);
-
-            if (showCameraWidgets && !syncCamera && users[message.userid]) {
-                let user = users[message.userid];
-                if (!user.cameraWidget) {
-                    if (!myCameraWidgetManager.isActive()) {
-                        await myCameraWidgetManager.initialize();
-                    }
-//                    user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]), new Communicator.Color(user.color[0], user.color[1], user.color[2]));
-                   user.cameraWidget = new CameraWidget(myCameraWidgetManager, new Communicator.Color(user.color[0], user.color[1], user.color[2]), new Communicator.Color(user.color[0], user.color[1], user.color[2]),
-                    0.4,true,false,1000);
-
-                }
-                if (!user.label) {
-                   let divid = createLabel(message.user, user.color);
-                   user.label = await mySpriteManager.createDOMSprite(divid, cam.getPosition(), 0.4,false,false);
-                }
-                else {
-                    await user.label.setPosition(cam.getPosition());
- 
-                 }
-
-                await user.cameraWidget.update(cam);
-
-            }
-
-            if (message.type == "camera" && syncCamera) {
+         
+            if (message.type == "camera" && message.synced && syncCamera) {
                 await viewer.view.setCamera(cam);
-
-                let message = { camera: cam.toJson() };
-                sendMessage("camera2", message);
+                let message = { camera: cam.toJson(), synced:false };
+                sendMessage("camera", message);
 
             }
         }
@@ -1111,10 +1042,10 @@ async function handleMessage(message) {
 }
 
 
-function processCallbacks(message) {
+async function processCallbacks(message,send =false) {
     for (let i=0; i<messageReceivedCallbacks.length; i++) {
         let callback = messageReceivedCallbacks[i];
-       if (!callback(message)) {
+       if (!await callback(message,send)) {
             return false;
         }
     }
@@ -1245,15 +1176,13 @@ export async function connect(roomname, username, password) {
             users[id].delete = false;
         }
 
+        if (!await processCallbacks({type:"predelete", message:message})) {
+            return;
+        }      
+
         for (let i in users) {
             if (users[i].delete) {
-                suspendInternal  = true;
-                if (users[i].cameraWidget) {
-                    users[i].cameraWidget.flush();
-                    mySpriteManager.flush(users[i].label.nodeid);
-                }
                 delete users[i];
-                suspendInternal  = false;
             }
         }
 
@@ -1263,30 +1192,6 @@ export async function connect(roomname, username, password) {
 
     });
 }
-
-
-async function flushCameraWidgets(deleteManager) {
-    suspendInternal = true;
-    await mySpriteManager.flushAll();
-    for (let i in users) {
-        let user = users[i];
-        if (user.cameraWidget) {
-            await user.cameraWidget.flush();
-            user.cameraWidget = null;
-            user.label = null;
-        }
-    }
-    if (deleteManager) {
-        myCameraWidgetManager.deactivate();
-    }
-    suspendInternal = false;
-}
-
-var ctxd;
-var devdiv;
-
-
-
 
 function createLabel(text, color) {
     let m = ctxd.measureText(text);
@@ -1301,18 +1206,6 @@ function createLabel(text, color) {
 }
 
 
-function setupMeasureCanvas() {
-    $("body").append('<div style="display:none;position:absolute;background: white; z-index:1000"><canvas id="dummycanvas" width="420px" height="150px;"></canvas></div>');
-    ctxd = document.getElementById("dummycanvas").getContext('2d');
-    let font = '50px Arial';
-    ctxd.font = font;
-    let m = ctxd.measureText("Hello World Test");
-    let w = m.width + 40;
-    let actualHeight = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) + 20;
-
-    $("body").append('<div style="display:none"><div id="' + "camlabel" + '" style="height:' + actualHeight + 'px;width:' + w + 'px;text-align:center;border-radius:20px;display:block;pointer-events:none;font-family:arial;font-size:50px;position:absolute;background-color:rgba(0,0,0,0.5);color:white;display:block">Hello World Test</div></div>');
-    devdiv = $("#camlabel");
-}
 
 
 function createMeshDataFromJson(json) {

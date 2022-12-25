@@ -1,4 +1,4 @@
-export class SpriteManager {
+class SpriteManager {
 
     constructor(viewer) {
         this._viewer = viewer;
@@ -664,7 +664,7 @@ export class SpriteManager {
 }
 
 
-export class Sprite {
+class Sprite {
 
     constructor(manager,nodeid, center, scale, type,range, payload, dynamic, isNative,offsetdata) {
         this._manager = manager;

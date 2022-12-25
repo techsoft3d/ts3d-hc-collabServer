@@ -1,4 +1,4 @@
-export class CameraWidget {
+class CameraWidget {
 
     constructor(manager, lineColor = new Communicator.Color(255,0,0), faceColor = new Communicator.Color(255,0,0),faceOpacity = 0.1, renderFaces = true, suppressScale = false, fixedLength = undefined) {
         this._manager = manager;    
@@ -153,7 +153,7 @@ export class CameraWidget {
 }
 
 
-export class CameraWidgetManager {
+class CameraWidgetManager {
 
     constructor(viewer) {
         this._viewer = viewer;   
