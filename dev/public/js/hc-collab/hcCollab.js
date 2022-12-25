@@ -451,7 +451,7 @@ async function clearCustom() {
 
     }
 
-    processCallbacks({type:"clear"},true);
+    await processCallbacks({type:"clear"},true);
 
     await viewer.model.clearCollab();
     viewer._modelStructure._assemblyTree._dynamicNodeIdSeed = -63;
@@ -1181,21 +1181,6 @@ export async function connect(roomname, username, password) {
 
     });
 }
-
-function createLabel(text, color) {
-    let m = ctxd.measureText(text);
-    let w = m.width + 40;
-    let actualHeight = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) + 20;
-    devdiv.css("width", w + "px");
-    devdiv.css("background-color", 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')');
-    devdiv.html(text);
-    text = text.replace(/ /g,"_");
-    devdiv.attr("id","dynamic0" + text);
-    return "dynamic0" + text;
-}
-
-
-
 
 function createMeshDataFromJson(json) {
 

@@ -56,7 +56,11 @@ class CameraWidgetCollabPlugin {
 
     async flushCameraWidgets(deleteManager) {
         let users = hcCollab.getUsers();
-        hcCollab.setSuspendSend(true);
+        let unsuspend = false;
+        if (!hcCollab.getSuspendSend()) {
+            hcCollab.setSuspendSend(true);
+            unsuspend = true;
+        }
         this.mySpriteManager.flushAll();
         for (let i in users) {
             let user = users[i];
@@ -69,7 +73,9 @@ class CameraWidgetCollabPlugin {
         if (deleteManager) {
             myCameraWidgetManager.deactivate();
         }
-        hcCollab.setSuspendSend(false);
+        if (unsuspend) {
+            hcCollab.setSuspendSend(false);
+        }
     }
 
 
@@ -108,9 +114,6 @@ class CameraWidgetCollabPlugin {
         return "dynamic0" + text;
     }
     
-    
-
-
 
     async hcCollabMessageReceived(message,send) {
 
@@ -156,12 +159,18 @@ class CameraWidgetCollabPlugin {
                 let users = hcCollab.getUsers();
                 for (let i in users) {
                     if (users[i].delete) {
-                        hcCollab.setSuspendSend(true);
+                        let unsuspend = false;
+                        if (!hcCollab.getSuspendSend()) {
+                            hcCollab.setSuspendSend(true);
+                            unsuspend = true;
+                        }
                         if (users[i].cameraWidget) {
                             users[i].cameraWidget.flush();
                             this.mySpriteManager.flush(users[i].label.nodeid);
                         }
-                        hcCollab.setSuspendSend(false);
+                        if (unsuspend) {    
+                            hcCollab.setSuspendSend(false);
+                        }
                     }
                 }
         
@@ -171,7 +180,6 @@ class CameraWidgetCollabPlugin {
 
         return true;
     }
-
 
 }
 
