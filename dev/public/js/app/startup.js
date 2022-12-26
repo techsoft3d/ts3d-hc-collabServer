@@ -216,7 +216,7 @@ function setupKinematics() {
 
 async function msready() {
 
-    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/microengine.scs");
+    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/arboleda.scs");
 
 //    setupKinematics();
   

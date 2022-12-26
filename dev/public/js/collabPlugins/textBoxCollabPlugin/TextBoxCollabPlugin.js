@@ -70,8 +70,7 @@ class TextBoxCollabPlugin {
         let extradiv = this.createExtraDiv(user.name + " (You)");
         let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
         let markup = new TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
-            undefined, undefined, undefined, true, extradiv, undefined, { username: user.name, userid: user.id });
-
+            undefined, undefined, undefined, true, extradiv, undefined, { username: user.name, userid: user.id },true);
         return markup;
     }
 
@@ -115,7 +114,12 @@ class TextBoxCollabPlugin {
 
                                 json.backgroundColor = backgroundColor;
                                 markup = TextBoxMarkupItem.fromJson(this.textBoxMarkupTypeManager, json);
+                                if (markup.getCheckVisibility()) {
+                                    markup.hide();
+                                    this._viewer.redraw();
+                                }        
                                 this.textBoxMarkupTypeManager.add(markup);
+                                
                             }
                             else {
                                 markup.setFirstPoint(Communicator.Point3.fromJson(json.firstPoint));
@@ -155,6 +159,10 @@ class TextBoxCollabPlugin {
 
                         json.backgroundColor = backgroundColor;
                         let markup = TextBoxMarkupItem.fromJson(this.textBoxMarkupTypeManager, json);
+                        if (markup.getCheckVisibility()) {
+                            markup.hide();
+                            this._viewer.redraw();
+                        }
                         this.textBoxMarkupTypeManager.add(markup);
                         this.updatePinned(markup);
 

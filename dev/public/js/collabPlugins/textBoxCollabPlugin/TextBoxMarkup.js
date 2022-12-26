@@ -11,20 +11,37 @@ class TextBoxMarkupTypeManager {
             new ResizeObserver(function () {
                 setTimeout(function () {
                     _this.refreshMarkup();
-                    }, 250);
+                }, 250);
             }).observe(this._viewer.getViewElement());
 
 
             this._viewer.setCallbacks({
                 camera: function () {
-                  
+
                     _this.refreshMarkup();
                     setTimeout(function () {
                         _this.refreshMarkup();
-                        }, 50);
+                    }, 50);
                 }
             });
         }
+        this._viewer.setCallbacks({
+            frameDrawn: function (cam, p) {
+                for (let i = 0; i < _this._markups.length; i++) {
+                    if (_this._markups[i].getCheckVisibility()) {
+                        _this._markups[i].hide();
+                    }
+                }
+
+
+                for (let i = 0; i < p.length; i++) {
+                    if (_this._markups[i].getCheckVisibility() && _this.markupsToTestVisibility[p[i]].getHidden()) {
+                        _this.markupsToTestVisibility[p[i]].show();
+                    }
+                }
+            }
+        });
+
     }
 
     setMarkupUpdatedCallback(callback) {
@@ -59,7 +76,21 @@ class TextBoxMarkupTypeManager {
             let uuid = this._viewer.markupManager.registerMarkup(markup);
             markup.setMarkupId(uuid);        
         }
+        this.updateVisibilityList();
+        
+    }
 
+    updateVisibilityList() { 
+
+        let visibilities = [];
+        this.markupsToTestVisibility = [];
+        for (let i=0;i<this._markups.length;i++) {
+            if (this._markups[i].getCheckVisibility()) {
+                visibilities.push(this._markups[i].getFirstPoint());
+                this.markupsToTestVisibility.push(this._markups[i]);
+            }
+        }
+        this._viewer.view.setPointVisibilityTest(visibilities);
     }
     
     delete(uniqueid) {
@@ -143,6 +174,16 @@ class TextBoxMarkupTypeManager {
 
     }
 
+    checkAllVisibilities() {
+        for (let i=0;i<this._markups.length;i++) {
+            this._markups[i].checkVisibility();
+        }
+        
+    }
+
+
+
+
 }
 
 
@@ -155,6 +196,7 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
         json.font, json.fontSize, Communicator.Color.fromJson(json.backgroundColor), Communicator.Color.fromJson(json.circleColor), json.circleRadius, 
         json.maxWidth, json.pinned,json.extraDivText ? json.extraDivText : null, json.uniqueid,json.userdata);
         markup.setText(decodeURIComponent(json.text));
+        markup.setCheckVisibility(json.checkVisibility);
         markup.deselect();
         return markup;
     }
@@ -171,7 +213,7 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     
 
     constructor(typeManager, firstPoint, secondPoint = null,secondPointRel = null,fontStyle = "monospace", fontSize = "12px", backgroundColor =  new Communicator.Color(238,243,249),
-         circleColor = new Communicator.Color(128,128,255), circleRadius = 4.0, maxWidth = 300, pinned = false, extraDiv = null,uniqueid = null, userdata = null) {
+         circleColor = new Communicator.Color(128,128,255), circleRadius = 4.0, maxWidth = 300, pinned = false, extraDiv = null,uniqueid = null, userdata = null, checkVisibility = false) {
         super();
         this._textBoxMarkupTypeManager = typeManager;
         this._viewer = typeManager._viewer;
@@ -197,7 +239,7 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
         this._maxWidth = maxWidth;
 
         this._pinned = pinned;
-        
+        this._checkVisibility = checkVisibility;
         this._lineGeometryShape = new Communicator.Markup.Shape.Polyline();
         this._circleGeometryShape = new Communicator.Markup.Shape.Circle();
 
@@ -211,8 +253,37 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
             this._secondPointRel = secondPointRel.copy();
         }
 
-
         this._initialize();
+        this._hidden = false;
+    }
+
+    show() {
+        if (this._hidden) { 
+            this._hidden = false;
+            $(this._textBoxDiv).css("display","block");
+            $(this._svgElement).css("display","block");
+        }
+    }
+
+    hide() {
+        if (!this._hidden) {
+            this._hidden = true;
+            $(this._textBoxDiv).css("display","none");
+            $(this._svgElement).css("display","none");
+        }
+    }
+
+    getHidden() {
+        return this._hidden;
+    }
+
+    setCheckVisibility(check) {
+        this._checkVisibility = check;
+        this._textBoxMarkupTypeManager.updateVisibilityList();
+    }
+
+    getCheckVisibility() {
+        return this._checkVisibility;
     }
 
     getUserData() {
@@ -272,7 +343,7 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
             "allowEditing": this._allowEditing,
             "text": this._textBoxText ? encodeURIComponent($(this._textBoxText).val()) : "",
             "userdata": this._userdata,
-
+            "checkVisibility": this._checkVisibility
 //            "extraDivText": encodeURIComponent($(this._extraDivText).val())
         };
         return json;
@@ -311,6 +382,9 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     }
 
     draw() {
+        if (this._hidden) {
+            return;
+        }
 
         $(this._svgElement).empty();
         const renderer = this._viewer.markupManager.getRenderer();
@@ -356,8 +430,9 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
             this._addCircleElement(this._circleGeometryShape);
         }
         else {
-            renderer.drawPolyline(this._lineGeometryShape);
-            renderer.drawCircle(this._circleGeometryShape);
+          
+                renderer.drawPolyline(this._lineGeometryShape);
+                renderer.drawCircle(this._circleGeometryShape);
         }
 
 
@@ -366,6 +441,9 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     }
 
     hit(point) {
+        if (this._hidden) {
+            return false;
+        }
 
         let minx =  parseInt($(this._textBoxDiv).css("left"));
         let miny =  parseInt($(this._textBoxDiv).css("top"));
@@ -428,7 +506,13 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
         if (this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()) {
             this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()(this);
         }
+        this._textBoxMarkupTypeManager.updateVisibilityList();
     }
+
+    getFirstPoint() {
+        return this._firstPoint.copy();
+    }
+
 
     getSecondPoint() {
         return this._secondPoint.copy();
