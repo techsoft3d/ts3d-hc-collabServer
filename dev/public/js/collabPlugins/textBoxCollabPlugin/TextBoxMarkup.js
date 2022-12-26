@@ -181,13 +181,7 @@ class TextBoxMarkupTypeManager {
         }
         
     }
-
-
-
-
 }
-
-
 
 class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
 
@@ -209,10 +203,7 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
             b += a[c].x + "," + a[c].y;
         return b;
     }
-
-
     
-
     constructor(typeManager, firstPoint, secondPoint = null,secondPointRel = null,fontStyle = "monospace", fontSize = "12px", backgroundColor =  new Communicator.Color(238,243,249),
          circleColor = new Communicator.Color(128,128,255), circleRadius = 4.0, maxWidth = 300, pinned = false, extraDiv = null,uniqueid = null, userdata = null, checkVisibility = false) {
         super();
@@ -684,7 +675,6 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     }
 }
 
-
 class TextBoxMarkupOperator {
     constructor(viewer, textBoxMarkupTypeManager = null) {
         
@@ -867,7 +857,6 @@ class TextBoxMarkupOperator {
         if (res) {
             this._activeMarkupItem.setSecondPoint(new Communicator.Point3(out.x, out.y, out.z));
             this._textBoxMarkupTypeManager.refreshMarkup();
-        }
-        
+        }        
     }
 }
