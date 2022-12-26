@@ -35,8 +35,9 @@ class TextBoxMarkupTypeManager {
 
 
                 for (let i = 0; i < p.length; i++) {
-                    if (_this._markups[i].getCheckVisibility() && _this.markupsToTestVisibility[p[i]].getHidden()) {
+                    if (_this.markupsToTestVisibility[p[i]].getCheckVisibility() && _this.markupsToTestVisibility[p[i]].getHidden()) {
                         _this.markupsToTestVisibility[p[i]].show();
+                        _this.markupsToTestVisibility[p[i]].refreshText();
                     }
                 }
             }
@@ -260,7 +261,7 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     show() {
         if (this._hidden) { 
             this._hidden = false;
-            $(this._textBoxDiv).css("display","block");
+            $(this._textBoxDiv).css("display","flex");
             $(this._svgElement).css("display","block");
         }
     }
@@ -280,6 +281,9 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
     setCheckVisibility(check) {
         this._checkVisibility = check;
         this._textBoxMarkupTypeManager.updateVisibilityList();
+        if (this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()) {
+            this._textBoxMarkupTypeManager.getMarkupUpdatedCallback()(this);
+        }
     }
 
     getCheckVisibility() {
@@ -308,6 +312,11 @@ class TextBoxMarkupItem extends Communicator.Markup.MarkupItem {
         }
     }
 
+
+    refreshText() {
+        this._adjustTextBox();
+        this._textBoxMarkupTypeManager.refreshMarkup();
+    }
     setText(text) {
         $(this._textBoxText).val(text);
         this._adjustTextBox();

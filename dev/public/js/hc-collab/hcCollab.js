@@ -1073,11 +1073,11 @@ export async function connect(roomname, username, password) {
                    
     });
 
-    socket.on('sendInitialState', function (msg) {
+    socket.on('sendInitialState', async function (msg) {
       
         let state = { type:'sendInitialState', camera: viewer.view.getCamera().toJson()};
                
-        if (!processCallbacks(state)) {
+        if (!await processCallbacks(state)) {
             return;
         }      
 
