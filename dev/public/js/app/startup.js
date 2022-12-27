@@ -240,7 +240,7 @@ async function msready() {
     cameraWidgetCollabPlugin.setShowCameraWidgets(true);
 
     hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999)); 
-    textBoxCollabPlugin = new TextBoxCollabPlugin(hwv);
+    textBoxCollabPlugin = new TextBoxCollabPlugin(hwv, hcCollab);
     textBoxCollabPlugin.initialize();
   
 

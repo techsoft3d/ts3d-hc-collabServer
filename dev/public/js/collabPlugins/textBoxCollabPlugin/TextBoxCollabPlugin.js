@@ -1,8 +1,10 @@
 class TextBoxCollabPlugin {
-    constructor(viewer) {
+    constructor(viewer, collab = null) {
         this._viewer = viewer;
+        this._collab = collab;
         this.textBoxManager = null;
         this.textBoxOperator = null;
+        this._markupItemcallback = null;
     }
 
 
@@ -10,7 +12,9 @@ class TextBoxCollabPlugin {
 
         let _this = this;
 
-        hcCollab.registerMessageReceivedCallback(function (message) { return _this.hcCollabMessageReceived(message); });
+        if (this._collab) {
+            this._collab.registerMessageReceivedCallback(function (message) { return _this.hcCollabMessageReceived(message); });
+        }
         this.textBoxManager = new hcTextBox.TextBoxManager(this._viewer, false);
         this.textBoxManager.setMarkupUpdatedCallback(function (markup, deleted) { _this.textBoxMarkupUpdated(markup, deleted); });
 
@@ -23,14 +27,19 @@ class TextBoxCollabPlugin {
         return markupOperatorHandle;
     }
 
+    setMarkupItemCallback(callback) {
+        this._markupItemcallback = callback;
+
+    }
+    
     createExtraDiv(text) {
         let html = "";
         html += '<div style="white-space: nowrap;overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;';
         html += 'outline-width:inherit;outline-style:solid;background-color:white;background: white;font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 38px)">' + text + '</div>';
-        html += '<div title = "Delete" style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div>;';
-        html += '<div title = "Unpin" style="pointer-events:all;position:absolute;right:13px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer"><span style="pointer-events:none;height:7px;width:7px;top:4px;left:2px;position:absolute;outline-color:black;outline-style:solid;outline-width:1px;border-radius:50%;display:inline-block;background-color:black"></span></div>;';
+        html += '<div title = "Delete" style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div>';
+        html += '<div title = "Unpin" style="pointer-events:all;position:absolute;right:13px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer"><span style="pointer-events:none;height:7px;width:7px;top:4px;left:2px;position:absolute;outline-color:black;outline-style:solid;outline-width:1px;border-radius:50%;display:inline-block;background-color:black"></span></div>';
         html += '<div  title = "Activate Visiblity Test" title = "Unpin" style="opacity:0.3;pointer-events:all;position:absolute;right:26px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">';
-        html += '<div style="pointer-events:none;position:absolute;width:3px;height:3px;border:solid 1px #000;border-radius:50%;left:3px;top:5px;"></div><div style="pointer-events:none;position:absolute;width:7px;height:7px;border:solid 1px #000;border-radius:75% 15%;transform:rotate(45deg);left:1px;top:3px"></div></div>;';
+        html += '<div style="pointer-events:none;position:absolute;width:3px;height:3px;border:solid 1px #000;border-radius:50%;left:3px;top:5px;"></div><div style="pointer-events:none;position:absolute;width:7px;height:7px;border:solid 1px #000;border-radius:75% 15%;transform:rotate(45deg);left:1px;top:3px"></div></div>';
         html += '</div>';
 
         let _this = this;
@@ -63,24 +72,39 @@ class TextBoxCollabPlugin {
 
     textBoxMarkupUpdated(markup, deleted) {
 
-        if (hcCollab.getActive() && !hcCollab.getInternalSuspend()) {
+        if (this._collab && this._collab.getActive() && !this._collab.getInternalSuspend()) {
             if (deleted) {
-                hcCollab.sendCustomMessage({ customType: "textboxmarkupdeleted", uniqueid: markup.getUniqueId() });
+                this._collab.sendCustomMessage({ customType: "textboxmarkupdeleted", uniqueid: markup.getUniqueId() });
                 return;
             }
             let json = markup.toJson();
-            hcCollab.sendCustomMessage({ customType: "textboxmarkupupdated", textboxdata: json });
+            this._collab.sendCustomMessage({ customType: "textboxmarkupupdated", textboxdata: json });
         }
     }
 
 
     createMarkupItemCallback(manager, pos) {
-        let user = hcCollab.getLocalUser();
-        let extradiv = this.createExtraDiv(user.name + " (You)");
-        let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
-        let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
-            undefined, undefined, undefined, true, extradiv, undefined, { username: user.name, userid: user.id },false);
-        return markup;
+        if (this._markupItemcallback) {
+            return this._markupItemcallback(manager, pos);
+        }
+        else {
+            if (this._collab) {
+                let user = this._collab.getLocalUser();
+                let extradiv = this.createExtraDiv(user.name + " (You)");
+                let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
+                let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
+                    undefined, undefined, undefined, true, extradiv, undefined, { username: user.name, userid: user.id },false);
+                return markup;
+            }
+            else {
+               
+                let extradiv = this.createExtraDiv("");
+                let backgroundColor = new Communicator.Color(200,200,200);
+                let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
+                    undefined, undefined, undefined, true, extradiv, undefined, null,false);
+                return markup;
+            }
+        }
     }
 
 
@@ -132,7 +156,7 @@ class TextBoxCollabPlugin {
                             if (!markup) {
 
                                 json.extraDivText = this.createExtraDiv(msg.user);
-                                let user = hcCollab.getUserInfo(msg.userid);
+                                let user = this._collab.getUserInfo(msg.userid);
                                 let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
 
                                 json.backgroundColor = backgroundColor;
@@ -174,7 +198,7 @@ class TextBoxCollabPlugin {
                         let json = msg.textBoxes[i];
                         json.extraDivText = this.createExtraDiv(json.userdata.username);
                         let backgroundColor;
-                        let user = hcCollab.getUserInfo(json.userdata.userid);
+                        let user = this._collab.getUserInfo(json.userdata.userid);
                         if (user) {                          
                             backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
                         }
