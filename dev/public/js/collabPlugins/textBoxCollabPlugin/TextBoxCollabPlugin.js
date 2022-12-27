@@ -1,8 +1,8 @@
 class TextBoxCollabPlugin {
     constructor(viewer) {
         this._viewer = viewer;
-        this.textBoxMarkupTypeManager = null;
-        this.textBoxMarkupOperator = null;
+        this.textBoxManager = null;
+        this.textBoxOperator = null;
     }
 
 
@@ -11,14 +11,14 @@ class TextBoxCollabPlugin {
         let _this = this;
 
         hcCollab.registerMessageReceivedCallback(function (message) { return _this.hcCollabMessageReceived(message); });
-        this.textBoxMarkupTypeManager = new TextBoxMarkupTypeManager(this._viewer, false);
-        this.textBoxMarkupTypeManager.setMarkupUpdatedCallback(function (markup, deleted) { _this.textBoxMarkupUpdated(markup, deleted); });
+        this.textBoxManager = new hcTextBox.TextBoxManager(this._viewer, false);
+        this.textBoxManager.setMarkupUpdatedCallback(function (markup, deleted) { _this.textBoxMarkupUpdated(markup, deleted); });
 
-        this.textBoxMarkupOperator = new TextBoxMarkupOperator(this._viewer, this.textBoxMarkupTypeManager);
-        this.textBoxMarkupOperator.setAllowCreation(0);
+        this.textBoxOperator = new hcTextBox.TextBoxOperator(this._viewer, this.textBoxManager);
+        this.textBoxOperator.setAllowCreation(0);
 
-        this.textBoxMarkupOperator.setCreateMarkupItemCallback(function (manager, pos) { return _this.createMarkupItemCallback(manager, pos); });
-        const markupOperatorHandle = this._viewer.operatorManager.registerCustomOperator(this.textBoxMarkupOperator);
+        this.textBoxOperator.setCreateMarkupItemCallback(function (manager, pos) { return _this.createMarkupItemCallback(manager, pos); });
+        const markupOperatorHandle = this._viewer.operatorManager.registerCustomOperator(this.textBoxOperator);
         this._viewer.operatorManager.push(markupOperatorHandle);
         return markupOperatorHandle;
     }
@@ -39,21 +39,21 @@ class TextBoxCollabPlugin {
         $("body").append(test);
         let test2 = $(test).children()[1];
         $(test2).on("click", (e) => {
-            _this.textBoxMarkupTypeManager.delete(e.target.parentElement.parentElement.id);
-            _this.textBoxMarkupTypeManager.getByID(e.target.parentElement.parentElement.id);
+            _this.textBoxManager.delete(e.target.parentElement.parentElement.id);
+            _this.textBoxManager.getByID(e.target.parentElement.parentElement.id);
         });
 
 
         let test3 = $(test).children()[2];
         $(test3).on("click", (e) => {
-            let markup = _this.textBoxMarkupTypeManager.getByID(e.target.parentElement.parentElement.id);
+            let markup = _this.textBoxManager.getByID(e.target.parentElement.parentElement.id);
             markup.setPinned(!markup.getPinned());
             _this.updatePinned(markup);
         });
 
         let test4= $(test).children()[3];
         $(test4).on("click", (e) => {
-            let markup = _this.textBoxMarkupTypeManager.getByID(e.target.parentElement.parentElement.id);
+            let markup = _this.textBoxManager.getByID(e.target.parentElement.parentElement.id);
             markup.setCheckVisibility(!markup.getCheckVisibility());
             _this.updateVisiblityTest(markup);
         });
@@ -78,7 +78,7 @@ class TextBoxCollabPlugin {
         let user = hcCollab.getLocalUser();
         let extradiv = this.createExtraDiv(user.name + " (You)");
         let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
-        let markup = new TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
+        let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
             undefined, undefined, undefined, true, extradiv, undefined, { username: user.name, userid: user.id },false);
         return markup;
     }
@@ -113,7 +113,7 @@ class TextBoxCollabPlugin {
 
 
     setTextBoxMarkupAllowCreation(allow) {
-        this.textBoxMarkupOperator.setAllowCreation(allow);
+        this.textBoxOperator.setAllowCreation(allow);
     }
 
 
@@ -128,7 +128,7 @@ class TextBoxCollabPlugin {
                         case "textboxmarkupupdated": {
 
                             let json = msg.textboxdata;
-                            let markup = this.textBoxMarkupTypeManager.getByID(json.uniqueid);
+                            let markup = this.textBoxManager.getByID(json.uniqueid);
                             if (!markup) {
 
                                 json.extraDivText = this.createExtraDiv(msg.user);
@@ -136,12 +136,12 @@ class TextBoxCollabPlugin {
                                 let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
 
                                 json.backgroundColor = backgroundColor;
-                                markup = TextBoxMarkupItem.fromJson(this.textBoxMarkupTypeManager, json);
+                                markup = hcTextBox.TextBoxMarkupItem.fromJson(this.textBoxManager, json);
                                 if (markup.getCheckVisibility()) {
                                     markup.hide();
                                     this._viewer.redraw();
                                 }        
-                                this.textBoxMarkupTypeManager.add(markup);
+                                this.textBoxManager.add(markup);
                                 
                             }
                             else {
@@ -159,7 +159,7 @@ class TextBoxCollabPlugin {
                         }
                             break;
                         case "textboxmarkupdeleted": {
-                            this.textBoxMarkupTypeManager.delete(msg.uniqueid);
+                            this.textBoxManager.delete(msg.uniqueid);
                         }
                             break;
 
@@ -183,25 +183,25 @@ class TextBoxCollabPlugin {
                         }
 
                         json.backgroundColor = backgroundColor;
-                        let markup = TextBoxMarkupItem.fromJson(this.textBoxMarkupTypeManager, json);
+                        let markup = hcTextBox.TextBoxMarkupItem.fromJson(this.textBoxManager, json);
                         if (markup.getCheckVisibility()) {
                             markup.hide();
                             this._viewer.redraw();
                         }
-                        this.textBoxMarkupTypeManager.add(markup);
+                        this.textBoxManager.add(markup);
                         this.updatePinned(markup);
                         this.updateVisiblityTest(markup);
 
                     }
                     let _this = this;
                     setTimeout(function () {
-                        _this.textBoxMarkupTypeManager.refreshMarkup();
+                        _this.textBoxManager.refreshMarkup();
                     }, 100);
                 }
             }
                 break;
             case "sendInitialState": {
-                msg.textBoxes = this.textBoxMarkupTypeManager.exportMarkup();
+                msg.textBoxes = this.textBoxManager.exportMarkup();
             }
                 break;
         }
