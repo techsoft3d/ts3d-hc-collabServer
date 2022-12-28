@@ -34,7 +34,7 @@ class TextBoxCollabPlugin {
     
     createExtraDiv(text) {
         let html = "";
-        html += '<div style="white-space: nowrap;overflow:hidden;pointer-events:none;max-width:300px;position:absolute;left:0px;top:-18px;min-width:50px;width:inherit;height:15px;';
+        html += '<div style="white-space: nowrap;overflow:hidden;pointer-events:none;position:absolute;left:0px;top:-18px;min-width:50px;width:100%;height:15px;';
         html += 'outline-width:inherit;outline-style:solid;background-color:white;background: white;font-size:12px;font-weight:bold"><div style="overflow:hidden;width:calc(100% - 38px)">' + text + '</div>';
         html += '<div title = "Delete" style="pointer-events:all;position:absolute;right:0px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer">&#x2715</div>';
         html += '<div title = "Unpin" style="pointer-events:all;position:absolute;right:12px;top:0px;width:10px;font-size:10px;outline-style:solid;outline-width:1px;padding-left:1px;height:inherit;cursor:pointer"><span style="pointer-events:none;height:7px;width:7px;top:4px;left:2px;position:absolute;outline-color:black;outline-style:solid;outline-width:1px;border-radius:50%;display:inline-block;background-color:black"></span></div>';
