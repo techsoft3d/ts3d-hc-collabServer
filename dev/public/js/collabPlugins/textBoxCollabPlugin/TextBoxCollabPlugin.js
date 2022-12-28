@@ -44,42 +44,34 @@ class TextBoxCollabPlugin {
 
         let _this = this;
 
-        let test = $(html);
-        $("body").append(test);
-        let test2 = $(test).children()[1];
-        $(test2).on("click", (e) => {
+        let titlediv = $(html);
+        $("body").append(titlediv);
+        let deleteButton = $(titlediv).children()[1];
+        $(deleteButton).on("click", (e) => {
             _this.textBoxManager.delete(e.target.parentElement.parentElement.id);
-            _this.textBoxManager.getByID(e.target.parentElement.parentElement.id);
         });
 
 
-        let test3 = $(test).children()[2];
-        $(test3).on("click", (e) => {
+        let pinnedButton = $(titlediv).children()[2];
+        $(pinnedButton).on("click", (e) => {
             let markup = _this.textBoxManager.getByID(e.target.parentElement.parentElement.id);
             markup.setPinned(!markup.getPinned());
             _this.updatePinned(markup);
         });
 
-        let test4= $(test).children()[3];
-        $(test4).on("click", (e) => {
+        let visibilityButton= $(titlediv).children()[3];
+        $(visibilityButton).on("click", (e) => {
             let markup = _this.textBoxManager.getByID(e.target.parentElement.parentElement.id);
             markup.setCheckVisibility(!markup.getCheckVisibility());
             _this.updateVisiblityTest(markup);
         });
 
 
-        $(test2).hover(
-            function() { $( this).css("background-color", "lightgrey" ); }, function() { $( this).css("background-color", "white" );}
-        );
-        $(test3).hover(
-            function() { $( this).css("background-color", "lightgrey" ); }, function() { $( this).css("background-color", "white" );}
-        );
-        $(test4).hover(
+        $([deleteButton, pinnedButton, visibilityButton]).hover(
             function() { $( this).css("background-color", "lightgrey" ); }, function() { $( this).css("background-color", "white" );}
         );
 
-
-        return test;
+        return titlediv;
     }
 
 
