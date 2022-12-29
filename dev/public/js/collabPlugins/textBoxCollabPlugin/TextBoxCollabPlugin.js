@@ -162,7 +162,7 @@ class TextBoxCollabPlugin {
                             let markup = this.textBoxManager.getByID(json.uniqueid);
                             if (!markup) {
 
-                                json.extraDivText = this.createExtraDiv(msg.user);
+                                json.extraDiv = this.createExtraDiv(msg.user);
                                 let user = this._collab.getUserInfo(msg.userid);
                                 let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
 
@@ -203,7 +203,7 @@ class TextBoxCollabPlugin {
                 if (msg.textBoxes) {
                     for (let i = 0; i < msg.textBoxes.length; i++) {
                         let json = msg.textBoxes[i];
-                        json.extraDivText = this.createExtraDiv(json.userdata.username);
+                        json.extraDiv = this.createExtraDiv(json.userdata.username);
                         let backgroundColor;
                         let user = this._collab.getUserInfo(json.userdata.userid);
                         if (user) {                          
