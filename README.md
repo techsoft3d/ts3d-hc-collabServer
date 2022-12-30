@@ -1,5 +1,12 @@
 # ts3d-hc-collabserver [![NPM version](https://badge.fury.io/js/ts3d-hc-collabserver.svg)]
 
+## Version Update (0.6.1) 
+* Better Suport for plugins 
+    * (``setMessageReceivedCallback`` changed to ``registerMessageReceivedCallback``)
+    * Ability to retrieve internal suspend state
+    * Ability to retrieve user info by id
+* Camera and [Textbox](https://forum.techsoft3d.com/t/new-textbox-markup-released/1276) plugins added
+* Various bug fixes
 
 ## Version Update (0.4.0) 
 *  Support for mesh creation & instancing (beta)
@@ -72,7 +79,7 @@ Below is the minimum code required to establish a connection to the collaboratio
 
 ```
 hcCollab.initialize(hwv, ui);
-hcCollab.setMessageReceivedCallback(hcCollabMessageReceived);
+hcCollab.registerMessageReceivedCallback(hcCollabMessageReceived);
 hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
 ```
 
@@ -215,14 +222,11 @@ Each Room has its own persistant state object which can be modified and queried 
    
 ```
 
-### Camera Syncing and User Avatars
-By default the webviewer camera is automatically synced across clients. This can be turned off with `hcCollab.setSyncCamera(false)`. If you then also activate the camera widgets for the other users with `hcCollab.setShowCameraWidgets(true)` you can see the camera viewpoint of each user in the room, including the users name. Clicking on the name will take you to the users camera viewpoint.
-
-Make sure to call 'hcCollab.handleResize()' when the webviewer container changes size if camera widgets are active to ensure correct widget positioning.
-
+### Camera and Selection Syncing
+By default the webviewer camera is automatically synced across clients. This can be turned off with `hcCollab.setSyncCamera(false)`. It is also possible to disable syncing of the selections with `hcCollab.setSyncSelection(false)`.
 
 ### Handling Collaboration UI
-The demo project shows how to populate a list of user as well as handle chat messages by specifiying a callback function to the `hcCollab.setMessageReceivedCallback()` function. Using this callback you can detect if a new user has joined the room, an existing user has disconnected or a new text message has been received.  
+The demo project shows how to populate a list of user as well as handle chat messages by specifiying a callback function to the `hcCollab.registerMessageReceivedCallback()` function. Using this callback you can detect if a new user has joined the room, an existing user has disconnected or a new text message has been received.  
 See below for an example on how to handle those messages:
 
 
@@ -414,10 +418,10 @@ None
 ```
 
 
-### **setMessageReceivedCallback** 
+### **registerMessageReceivedCallback** 
 
 #### *Description*
-Sets a callback function that will be executed when a new collaboration message has been received.
+Registers a callback function that will be executed when a new collaboration message has been received.
 
 #### *Parameters*
 * **callback** - Callback function that receives collaboration messages
@@ -427,7 +431,7 @@ None
 
 #### *Example*
 ```
-  hcCollab.setMessageReceivedCallback(function msgReceived(msg) {
+  hcCollab.registerMessageReceivedCallback(function msgReceived(msg) {
     console.log(msg);
   });
 ```
@@ -449,7 +453,7 @@ True if the local user is connected to the collaboration server, false otherwise
 ### **getLocalUser** 
 
 #### *Description*
-Returns the name and id of the local user.
+Returns the name, id and color of the local user.
 
 #### *Parameters*
 None
@@ -462,6 +466,34 @@ Local User Object
   let localUser = hcCollab.getLocalUser();
   console.log(localUser.id + ":" + localUser.name);
 ```
+
+
+
+
+### **getUserInfo** 
+
+#### *Description*
+Returns information about a connected user
+
+#### *Parameters*
+* **id** - Id of connected user
+
+#### *Return Value*
+User Object
+
+
+
+### **getUsers** 
+
+#### *Description*
+Returns an array with information about all users
+
+#### *Parameters*
+None
+
+#### *Return Value*
+Array of User Info
+
 
 
 ### **lockSession** 
@@ -572,6 +604,19 @@ True if sending of webviewer collaboration messages to the collaboration server 
 
 
 
+
+### **getInternalSuspend** 
+
+#### *Description*
+Returns true if the internal suspend state is set
+
+#### *Parameters*
+None
+
+#### *Return Value*
+True, if the internal suspend state is set, false otherwise.
+
+
 ### **getRoomData** 
 
 #### *Description*
@@ -617,6 +662,30 @@ None
 
 #### *Return Value*
 True if camera syncing is enabled, false otherwise.
+
+### **setSyncSelection** 
+
+#### *Description*
+Enables/disables selection syncing between clients.
+
+#### *Parameters*
+* **enable** - True to enable selection syncing, false to disable.
+
+#### *Return Value*
+None
+
+
+### **getSyncCamera** 
+
+#### *Description*
+Returns true if selection syncing is enabled.
+
+#### *Parameters*
+None
+
+
+#### *Return Value*
+True if selection syncing is enabled, false otherwise.
 
 
 
