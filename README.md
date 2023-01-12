@@ -1,6 +1,6 @@
 # ts3d-hc-collabserver [![NPM version](https://badge.fury.io/js/ts3d-hc-collabserver.svg)]
 
-## Version Update (0.6.2) 
+## Version Update (0.6.3) 
 * Better Suport for plugins 
     * (``setMessageReceivedCallback`` changed to ``registerMessageReceivedCallback``)
     * Ability to retrieve internal suspend state
@@ -267,7 +267,7 @@ It is straightforward to proxy the websocket traffic of the collaboration server
 
 ### Using Plugins
 Plugins are simply classes or a collection of functions that extend the functionality of the collaboration library. Two plugins are already part of this project, one for displaying camera widgets if cameras are not synchronized, and the other for synchronizing the new TextBox markup type, recently released [here](https://forum.techsoft3d.com/t/new-textbox-markup-released/1276). You can find those plugins in the dev/public/js/collabPlugins folder of this project. They are both integrated with the demo application.  
-To write a plugin you basically have to register a callback with registerMessageReceivedCallback() and then handle your own custom types, including synchronizing startup state, etc. Looking through the code of the demo and the existing plugins should give you a good idea of how to do this.
+To write a plugin you have to register a callback with registerMessageReceivedCallback() and then handle your own custom types, including synchronizing startup state, etc. Looking through the code of the demo and the two existing plugins for cameraWidgets and Textbox markup (which can be found in the collabPlugins directory) should give you a good idea of how to do this.
 
 
 ## Disclaimer
@@ -679,7 +679,7 @@ Enables/disables selection syncing between clients.
 None
 
 
-### **getSyncCamera** 
+### **getSyncSelection** 
 
 #### *Description*
 Returns true if selection syncing is enabled.
@@ -687,65 +687,5 @@ Returns true if selection syncing is enabled.
 #### *Parameters*
 None
 
-
 #### *Return Value*
 True if selection syncing is enabled, false otherwise.
-
-
-
-### **setShowCameraWidgets** 
-
-#### *Description*
-Enables/disables camera widgets for other clients.
-
-#### *Parameters*
-* **enable** - True to enable camera widgets, false to disable.
-
-#### *Return Value*
-None
-
-
-
-### **getShowCameraWidgets** 
-
-#### *Description*
-Returns true if camera widgets are enabled.
-
-#### *Parameters*
-None
-
-#### *Return Value*
-True if camera widgets are enabled, false otherwise.
-
-
-
-
-### **handleResize** 
-
-#### *Description*
-Call this function when the size of the WebViewer container changes to update the camera widget text.
-
-#### *Parameters*
-None
-
-#### *Return Value*
-None
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
