@@ -91,13 +91,11 @@ Please let us know if you run into any problems or require support for specific 
 
 ## Demo
 
-For a live demo of the this library please check out the [HOOPS Communicator 3D Sandbox](https://3dsandbox.techsoft3d.com). Its collaboration feature has been developed with this library. There is also a demo available as part of this project you can run with `npm run startdemo`. You can access the demo in the browser at http://localhost:3000/viewer.html. As soon as the demo it runs it will establish a connection to the collaboration server and you can open another browser window to connect as another user.  Running and looking through the code of this demo will help you understand how to build a UI around this library and some of its more advanced concepts like passing custom messages and building a basic UI.
+For a live demo of the this library please check out the [HOOPS Communicator 3D Sandbox](https://3dsandbox.techsoft3d.com). Its collaboration feature has been developed with this library. There is also a demo available as part of this project you can run with `npm run startdemo`. You can access the demo in the browser at http://localhost:3000/viewer.html. As soon as the demo runs, it will establish a connection to the collaboration server and you can open another browser window to connect another user.  Running and looking through the code of this demo will help you understand how to build a UI around this library and some of its more advanced concepts like passing custom messages and using plugins.
 
-The client side code for the demo can be found in the dev/public folder of this project. Please note that this demo is using the development version of the collbaration library. If you want to use the library in your own project you should use the minified version of the library that can be found in the dist folder of this project.
-
+The client side code for the demo can be found in the dev/public folder of this project. Please note that this demo is using the development version of the collboration library. If you want to use the library in your own project you should use the minified version, which can be found in the dist folder of this project.
 
 ## Advanced Concepts
-
 
 ### Sending your own custom messages
 By default the collaboration library will automatically syncronize webviewer calls across clients. However, in some cases you want to send more high level messages to other users. For example, in the 3D Sandbox when running the code in the editor, this is handled as a single custom message, not as a series of individual webviewer calls. In this scenario you most likely want to temporary suppress any webviewer messages from also getting synchronized. This can be done by calling `hcCollab.setSuspendSend(true)` before sending your custom message and then calling `hcCollab.setSuspendSend(false)` after your message has been sent. You have to make sure that all clients also call suspendSend when they receive your message.  
