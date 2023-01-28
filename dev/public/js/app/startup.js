@@ -4,17 +4,17 @@ var componentSetHash = [];
 var textBoxCollabPlugin = null;
 var cameraWidgetCollabPlugin = null;
 
-function sendCustomMessage() {
-
-    hcCollab.sendCustomMessage({ customType: "test",text: "Hello" });
-}
 
 
-function setupNodes() {
+function startKinematics() {
     selectionarray = [3, 6, 2, 7, 35];
     hwv.model.setNodesOpacity(selectionarray, 0.5);
     hwv.model.setInstanceModifier(Communicator.InstanceModifier.DoNotSelect,
         selectionarray, true);
+
+    setupKinematics();
+
+    hcCollab.sendCustomMessage({ customType: "startKinematics"});        
 }
 
 
@@ -157,8 +157,8 @@ async function hcCollabMessageReceived(msg) {
                         cameraWidgetCollabPlugin.setSyncCamera(msg.syncCamera);
                     }
                     break;
-                    case "test": {
-                        alert("User " + msg.user + " says " + msg.text);
+                    case "startKinematics": {
+                        setupKinematics();
                     }
                         break;
                     case "componentSet": {
@@ -216,10 +216,8 @@ function setupKinematics() {
 
 async function msready() {
 
-    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/arboleda.scs");
+    await hwv.model.loadSubtreeFromScsFile(hwv.model.getRootNode(),"models/microengine.scs");
 
-//    setupKinematics();
-  
     collaboratorTable = new Tabulator("#userlistdiv", {
         layout: "fitColumns",
         columns: [

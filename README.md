@@ -84,16 +84,16 @@ hcCollab.connect("default", "User" + Math.floor(Math.random() * 9999));
 ```
 
 ## Limitations
-Currently, this library does not sync ALL webviewer API calls. While mesh and mesh instance creation is supported, support is not complete and many other calls that are also not handled. Also, if a new user joins only the camera is synced automatically, though you can provide your own code to sync other client states. Finally, the default HOOPS Communicator UI in some cases manages its own state that might not reflect the state of the webviewer. For now, it is recommended to use your own, custom UI for the collaboration server to avoid those inconsistencies.
+Currently, this library does not sync ALL webviewer API calls. While mesh and mesh instance creation is partially supported, support is not complete and many other API calls are also not handled. Also, if a new user joins only the camera is synced automatically, though you can provide your own code to sync other client states. Finally, the default HOOPS Communicator UI in some cases manages its own state that might not reflect the state of the webviewer. For now, it is recommended to use your own, custom UI for the collaboration server to avoid those inconsistencies.
 
 
-Please let us know if you run into any problems or require support for specific functionality with regard to syncing. You can also of course add support yourself, either by forking the project or using the custom message mechanism of the library.
+Please let us know if you run into any problems or require support for specific functionality with regard to syncing. You can also of course add support yourself, either by using the custom message mechanism of the library or forking the project.
 
 ## Demo
 
-For a live demo of the this library please check out the [HOOPS Communicator 3D Sandbox](https://3dsandbox.techsoft3d.com). Its collaboration feature has been developed with this library. There is also a demo available as part of this project you can run with `npm run startdemo`. You can access the demo in the browser at http://localhost:3000/demo.html. As soon as the demo it runs it will establish a connection to the collabration server. You can open another browser window to connect as another user. After that, you can then call setupNodes() to make some parts of the model transparent. The demo uses the KinematicsToolkit for a simple interactive animation when clicking and dragging one of the interior parts.
+For a live demo of the this library please check out the [HOOPS Communicator 3D Sandbox](https://3dsandbox.techsoft3d.com). Its collaboration feature has been developed with this library. There is also a demo available as part of this project you can run with `npm run startdemo`. You can access the demo in the browser at http://localhost:3000/viewer.html. As soon as the demo it runs it will establish a connection to the collaboration server and you can open another browser window to connect as another user.  Running and looking through the code of this demo will help you understand how to build a UI around this library and some of its more advanced concepts like passing custom messages and building a basic UI.
 
-Running and looking through the code of this demo will help you understand how to build a UI around this library and some of its more advanced concepts. The client side code for the demo can be found in the dev/public folder of this project. Please note that this demo is using the development version of the collbaration library. If you want to use the library in your own project you should use the minified version of the library that can be found in the dist folder of this project.
+The client side code for the demo can be found in the dev/public folder of this project. Please note that this demo is using the development version of the collbaration library. If you want to use the library in your own project you should use the minified version of the library that can be found in the dist folder of this project.
 
 
 ## Advanced Concepts
@@ -261,7 +261,6 @@ async function hcCollabMessageReceived(msg) {
    
 ```
 
-
 ### Proxy Considerations and running on Port 80/443
 It is straightforward to proxy the websocket traffic of the collaboration server to a different port/url if you are running the server standalone and all your traffic has to go through a standard port. However, if you are using our streaming server or have another websocket-based service running on that same standard port, it will not be straightforward to differentiate the traffic and one of those services will most likely fail. In that case, you should either run the collaboration server on different port or on a different IP address altogether. If you are running the collaboration server on a different ip address/port from your webserver you need to specify its URL in the client during initialization.
 
@@ -272,8 +271,6 @@ To write a plugin you have to register a callback with registerMessageReceivedCa
 
 ## Disclaimer
 **This library is not an officially supported part of HOOPS Communicator and provided as-is.**
-
-
 
 ## Acknowledgments
 ### Library:
