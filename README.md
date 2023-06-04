@@ -1,5 +1,9 @@
 # ts3d-hc-collabserver [![NPM version](https://badge.fury.io/js/ts3d-hc-collabserver.svg)]
 
+## Version Update (0.6.7) 
+* Line support for mesh creation & color
+* Increased max message size
+
 ## Version Update (0.6.3) 
 * Better Suport for plugins 
     * (``setMessageReceivedCallback`` changed to ``registerMessageReceivedCallback``)

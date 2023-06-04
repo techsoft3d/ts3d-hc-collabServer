@@ -26,6 +26,7 @@ exports.deleteRoom = (roomname) => {
 exports.start = (httpServer, config) => {
 
   io = new Server(httpServer, {
+    maxHttpBufferSize: 1e8,
     cors: {
       origin: "*"
     }

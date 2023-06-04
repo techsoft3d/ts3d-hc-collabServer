@@ -276,6 +276,23 @@ async function setNodesFaceColorCustom(nodeIds, color) {
 
 
 
+async function setNodesLineColorCustom(nodeIds, color) {
+
+    var stack = new Error().stack;
+    if (stack.indexOf("hoops_web_viewer") == -1 ||  (stack.indexOf("web_viewer_ui") != -1 && stack.indexOf("web_viewer_ui") < stack.indexOf("hoops_web_viewer"))) {
+
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('linecolor', { nodeids: nodeIds, color: color.toJson() });
+
+        }
+    }
+
+    await viewer.model.setNodesLineColorCollab(nodeIds, color);
+
+}
+
+
+
 async function setMetallicRoughnessCustom(nodeIds, metallic, roughness) {
 
     var stack = new Error().stack;
@@ -373,6 +390,19 @@ async function unsetNodesFaceColorCustom(nodeIds) {
         }
     }
     return await viewer.model.unsetNodesFaceColorCollab(nodeIds);
+}
+
+
+async function unsetNodesLineColorCustom(nodeIds) {
+    var stack = new Error().stack;
+    if (stack.indexOf("hoops_web_viewer") == -1 ||  (stack.indexOf("web_viewer_ui") != -1 && stack.indexOf("web_viewer_ui") < stack.indexOf("hoops_web_viewer"))) {
+
+        if (socket && !suspendSend && !suspendInternal && !lockedClient) {
+            sendMessage('unsetlinecolor', { nodeids: nodeIds });
+
+        }
+    }
+    return await viewer.model.unsetNodesLineColorCollab(nodeIds);
 }
 
 
@@ -649,6 +679,13 @@ export function initialize(hwv,ui,url,div) {
 
     hwv.model.unsetNodesFaceColorCollab = hwv.model.unsetNodesFaceColor;
     hwv.model.unsetNodesFaceColor = unsetNodesFaceColorCustom;
+
+
+    hwv.model.setNodesLineColorCollab = hwv.model.setNodesLineColor;
+    hwv.model.setNodesLineColor = setNodesLineColorCustom;
+
+    hwv.model.unsetNodesLineColorCollab = hwv.model.unsetNodesLineColor;
+    hwv.model.unsetNodesLineColor = unsetNodesLineColorCustom;
 
 
     hwv.model.setNodesOpacityCollab = hwv.model.setNodesOpacity;
@@ -942,7 +979,7 @@ async function handleMessage(message) {
             catch (e) {
             }
         }
-            break;
+        break;
         case "facecolor": {
 
             try {
@@ -950,7 +987,8 @@ async function handleMessage(message) {
             }
             catch (e) {
             }
-        }            break;
+        }  
+        break;
 
         case "unsetfacecolor": {
             try {
@@ -959,7 +997,25 @@ async function handleMessage(message) {
             catch (e) {
             }
         }
-            break;
+        break;
+        case "linecolor": {
+
+            try {
+                await viewer.model.setNodesLineColorCollab(message.nodeids, Communicator.Color.fromJson(message.color));
+            }
+            catch (e) {
+            }
+        }  
+        break;
+
+        case "unsetlinecolor": {
+            try {
+                await viewer.model.unsetNodesLineColorCollab(message.nodeids);
+            }
+            catch (e) {
+            }
+        }
+        break;
         case "resetopacity": {
             await viewer.model.resetNodesOpacityCollab(message.nodeids, message.opacity);
 
@@ -1192,6 +1248,12 @@ function createMeshDataFromJson(json) {
         let facedata = json._faceMeshData[i];
         meshData.addFaces(facedata.vertexData,facedata.normalData);
     }
+
+    for (let i=0;i<json._polylineMeshData.length;i++) {        
+        let polylinedata = json._polylineMeshData[i];
+        meshData.addPolyline(polylinedata.vertexData);
+    }
+
     return meshData;
 }
 
