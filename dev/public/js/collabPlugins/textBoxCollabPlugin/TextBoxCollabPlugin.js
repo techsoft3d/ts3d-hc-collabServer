@@ -21,7 +21,7 @@ class TextBoxCollabPlugin {
         this.textBoxOperator = new hcTextBox.TextBoxOperator(this._viewer, this.textBoxManager);
         this.textBoxOperator.setAllowCreation(0);
 
-        this.textBoxOperator.setCreateMarkupItemCallback(function (manager, pos) { return _this.createMarkupItemCallback(manager, pos); });
+        this.textBoxOperator.setCreateMarkupItemCallback(function (manager, pos,config) { return _this.createMarkupItemCallback(manager, pos,config); });
         const markupOperatorHandle = this._viewer.operatorManager.registerCustomOperator(this.textBoxOperator);
         this._viewer.operatorManager.push(markupOperatorHandle);
         return markupOperatorHandle;
@@ -55,7 +55,7 @@ class TextBoxCollabPlugin {
         let pinnedButton = $(titlediv).children()[2];
         $(pinnedButton).on("click", (e) => {
             let markup = _this.textBoxManager.getByID(e.target.parentElement.parentElement.id);
-            markup.setPinned(!markup.getPinned());
+            markup.setFixed(!markup.getFixed());
             _this.updatePinned(markup);
         });
 
@@ -88,25 +88,29 @@ class TextBoxCollabPlugin {
     }
 
 
-    createMarkupItemCallback(manager, pos) {
+    createMarkupItemCallback(manager, pos,config) {
         if (this._markupItemcallback) {
-            return this._markupItemcallback(manager, pos);
+            return this._markupItemcallback(manager, pos,config);
         }
         else {
             if (this._collab) {
+                
+                let myConfig = Object.assign({}, config);
                 let user = this._collab.getLocalUser();
-                let extradiv = this.createExtraDiv(user.name);
-                let backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
-                let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
-                    undefined, undefined, undefined, true, extradiv, undefined, { username: user.name, userid: user.id },false);
+                myConfig.backgroundColor = new Communicator.Color(user.color[0], user.color[1], user.color[2]);
+                myConfig.extraDiv = this.createExtraDiv(user.name);
+                myConfig.userdata = { username: user.name, userid: user.id };
+                myConfig.fixed = true;
+                let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, myConfig);
                 return markup;
             }
             else {
+                let myConfig = Object.assign({}, config);
                
-                let extradiv = this.createExtraDiv("");
-                let backgroundColor = new Communicator.Color(200,200,200);
-                let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, undefined, undefined, undefined, undefined, backgroundColor,
-                    undefined, undefined, undefined, true, extradiv, undefined, null,false);
+                myConfig.extradiv = this.createExtraDiv("");
+                myConfig.backgroundColor = new Communicator.Color(200,200,200);
+                myConfig.fixed = true;
+                let markup = new hcTextBox.TextBoxMarkupItem(manager, pos, myconfig);
                 return markup;
             }
         }
@@ -116,7 +120,7 @@ class TextBoxCollabPlugin {
     updatePinned(markup) {
 
         let pinnedPart = $(markup.getExtraDiv()).children()[2];
-        if (markup.getPinned()) {
+        if (markup.getFixed()) {
             $($(pinnedPart).children()[0]).css("background-color", "black");
             $(pinnedPart).prop('title', 'Unpin');
         }
@@ -180,7 +184,7 @@ class TextBoxCollabPlugin {
                                 markup.setSecondPoint(Communicator.Point3.fromJson(json.secondPoint));
                                 markup._secondPointRel = Communicator.Point2.fromJson(json.secondPointRel);
                                 markup.setText(decodeURIComponent(json.text));
-                                markup.setPinned(json.pinned);
+                                markup.setFixed(json.fixed);
                                 markup.setCheckVisibility(json.checkVisibility);
                             }
 
