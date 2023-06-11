@@ -31,6 +31,16 @@ class TextBoxCollabPlugin {
         this._markupItemcallback = callback;
 
     }
+
+    async createMarkupItemFromCurrentPosition() {
+        let position = this.textBoxManager.getMouseClickPosition();
+        const config = new Communicator.PickConfig(Communicator.SelectionMask.Face);
+        const selectionItem = await this._viewer.view.pickFromPoint(position, config);
+        let markup = this.createMarkupItemCallback(this.textBoxManager, selectionItem.getPosition());
+        this.textBoxManager.add(markup);
+        this.textBoxManager.refreshMarkup();
+        return markup;
+    }
     
     createExtraDiv(text) {
         let html = "";
@@ -177,7 +187,7 @@ class TextBoxCollabPlugin {
                                     this._viewer.redraw();
                                 }        
                                 this.textBoxManager.add(markup);
-                                
+                                this.textBoxManager.refreshMarkup();
                             }
                             else {
                                 markup.setFirstPoint(Communicator.Point3.fromJson(json.firstPoint));
